@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telemark · Live Results</title>
+  <link rel="icon" type="image/png" href="/logo_telemark.png" />
+  <link rel="apple-touch-icon" href="/logo_telemark.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #09080d;
+      --surface: #13111a;
+      --surface-hover: #1c1926;
+      --surface-active: #242030;
+      --primary: #f06a37;
+      --primary-glow: rgba(240, 106, 55, 0.15);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ece9f0;
+      --muted: #8d899a;
+      --gold: #f3b73e;
+      --gold-bg: rgba(243, 183, 62, 0.1);
+      --success: #3ec896;
+      --success-bg: rgba(62, 200, 150, 0.1);
+      --danger: #ff5555;
+      --danger-bg: rgba(255, 85, 85, 0.1);
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: var(--border);
+      border-radius: 4px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(19, 17, 26, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo span {
+      font-weight: 400;
+    }
+
+    .live-badge {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid rgba(255, 85, 85, 0.2);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: pulse-glow 2s infinite;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    @keyframes pulse-glow {
+      0% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(255, 85, 85, 0.2); }
+      50% { opacity: 1; box-shadow: 0 0 0 6px rgba(255, 85, 85, 0); }
+      100% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(255, 85, 85, 0); }
+    }
+
+    .comp-name {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: calc(100vh - 73px);
+    }
+
+    aside {
+      background: rgba(19, 17, 26, 0.5);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    aside h3 {
+      margin: 0 0 16px 0;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    .cat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cat-item {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .cat-item:hover {
+      background: var(--surface-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .cat-item.active {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .cat-title {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .cat-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .cat-status-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-active);
+    }
+
+    .cat-status-badge.completed {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .cat-status-badge.running {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    main {
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      filter: grayscale(1) opacity(0.5);
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .empty-state h2 {
+      color: var(--text);
+      font-size: 24px;
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      max-width: 400px;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .cat-header {
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .cat-header h2 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .cat-subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .rounds-container {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .round-card {
+      background: rgba(19, 17, 26, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .round-header {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .round-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .round-badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface-active);
+      color: var(--text);
+    }
+
+    .round-badge.final {
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(243, 183, 62, 0.2);
+    }
+
+    .round-progress {
+      padding: 16px 24px;
+      font-size: 13px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 85, 85, 0.02);
+    }
+
+    .results-table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .td-place {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--muted);
+      width: 80px;
+      text-align: center;
+    }
+
+    tr:nth-child(1) .td-place { color: var(--gold); font-size: 24px; }
+    tr:nth-child(2) .td-place { color: #b5c2d4; }
+    tr:nth-child(3) .td-place { color: #ca986d; }
+
+    .td-number {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 16px;
+      width: 100px;
+      text-align: center;
+    }
+
+    .td-couple {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .td-crosses {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 16px;
+      text-align: center;
+      width: 120px;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .status-pill.recalled {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(62, 200, 150, 0.2);
+    }
+
+    .status-pill.out {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .borderline-alert {
+      background: var(--gold-bg);
+      color: var(--gold);
+      border-top: 1px solid rgba(243, 183, 62, 0.2);
+      padding: 16px 24px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 240px;
+      }
+      main {
+        padding: 24px;
+      }
+    }
+  </style>
+  <script src="/ui.js"></script>
+<script src="/telemark-config.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <div class="logo">tele<span>mark</span></div>
+      <div class="live-badge">
+        <span class="live-dot"></span>Live Results
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <a href="/scrutineer.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;padding:6px 12px;border:1px solid var(--border);border-radius:8px;transition:all 0.2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Scrutineer
+      </a>
+      <div class="comp-name" id="compName">Loading...</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <h3>Categories</h3>
+      <div class="cat-list" id="catList">
+        <div style="color: var(--muted); font-size: 14px;">Loading categories...</div>
+      </div>
+    </aside>
+
+    <main id="mainContent">
+      <div class="empty-state">
+        <div class="empty-icon" style="font-size:64px;margin-bottom:24px;filter:grayscale(1) opacity(0.5)">🏆</div>
+        <h2>No Category Selected</h2>
+        <p>Choose a category from the sidebar to view live round results, rankings, and recall details.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let activeCatId = null;
+    let pollInterval = null;
+    let storedResults = {}; // rdid -> data
+
+    async function api(path) {
+      const r = await fetch(path);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }
+
+    async function loadOverview() {
+      try {
+        const comp = await api('/api/competition');
+        if (comp) {
+          document.getElementById('compName').textContent = comp.name;
+        }
+
+        const data = await api('/api/scrutineer/overview');
+
+        // Auto-select category from query parameter if not already selected
+        if (!activeCatId && data.categories && data.categories.length > 0) {
+          const params = new URLSearchParams(window.location.search);
+          const catParam = params.get('c') || params.get('cat');
+          if (catParam) {
+            const found = data.categories.find(c => String(c.id) === String(catParam) || c.src_id === catParam);
+            if (found) {
+              activeCatId = found.id;
+            }
+          }
+        }
+
+        renderCategories(data.categories);
+
+        // Keep current selected category rendering updated
+        if (activeCatId) {
+          const freshCat = data.categories.find(c => c.id === activeCatId);
+          if (freshCat) {
+            await renderCategoryResults(freshCat);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load overview:', e);
+      }
+    }
+
+    function renderCategories(categories) {
+      const list = document.getElementById('catList');
+      if (!categories || categories.length === 0) {
+        list.innerHTML = '<div style="color: var(--muted); font-size: 14px;">No categories available.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      categories.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = `cat-item ${activeCatId === c.id ? 'active' : ''}`;
+        
+        let statusText = 'Pending';
+        let statusClass = '';
+        
+        if (c.rounds && c.rounds.length > 0) {
+          const activeRound = c.rounds.find(r => r.status === 'judging');
+          if (activeRound) {
+            statusText = `Round ${activeRound.ordinal} Live`;
+            statusClass = 'running';
+          } else {
+            const lastRound = c.rounds[c.rounds.length - 1];
+            if (lastRound.status === 'closed') {
+              statusText = lastRound.kind === 'final' ? 'Finished' : `Round ${lastRound.ordinal} Done`;
+              statusClass = 'completed';
+            }
+          }
+        }
+
+        btn.innerHTML = `
+          <span class="cat-title">${c.name}</span>
+          <div class="cat-meta">
+            <span>${c.entries} couples</span>
+            <span class="cat-status-badge ${statusClass}">${statusText}</span>
+          </div>
+        `;
+
+        btn.onclick = async () => {
+          activeCatId = c.id;
+          // Refresh list to update active class instantly
+          document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+          btn.classList.add('active');
+          await renderCategoryResults(c);
+        };
+
+        list.appendChild(btn);
+      });
+    }
+
+    async function renderCategoryResults(cat) {
+      const main = document.getElementById('mainContent');
+      main.innerHTML = `
+        <div class="cat-header">
+          <div>
+            <h2>${cat.name}</h2>
+            <div class="cat-subtitle">${cat.entries} couples registered · Status: <span style="color: var(--text); font-weight: 500">${cat.status}</span></div>
+          </div>
+        </div>
+        <div class="rounds-container" id="roundsList"></div>
+      `;
+
+      const roundsList = document.getElementById('roundsList');
+      if (!cat.rounds || cat.rounds.length === 0) {
+        roundsList.innerHTML = `
+          <div class="empty-state" style="padding: 40px 0;">
+            <div style="font-size: 40px; margin-bottom: 12px;">⏳</div>
+            <h2>No Rounds Initialized Yet</h2>
+            <p>Wait for the scrutineer to begin the first round of this category.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Render rounds in descending order so latest results are on top
+      const sortedRounds = [...cat.rounds].reverse();
+
+      for (const r of sortedRounds) {
+        const card = document.createElement('div');
+        card.className = 'round-card';
+        
+        const isFinal = String(r.kind).toLowerCase() === 'final';
+        const isClosed = r.status === 'closed';
+
+        card.innerHTML = `
+          <div class="round-header">
+            <h3>Round ${r.ordinal} <span class="round-badge ${isFinal ? 'final' : ''}">${r.kind}</span></h3>
+            <span class="round-badge" style="background: rgba(255,255,255,0.05);">${r.status}</span>
+          </div>
+          ${isClosed ? `<div style="display:flex;gap:6px;padding:10px 24px;flex-wrap:wrap;border-bottom:1px solid var(--border);align-items:center">
+            <span style="font-size:11px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:5px;margin-right:4px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Reports:
+            </span>
+            <a href="/print/results/${r.id}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:6px;text-decoration:none;background:var(--success-bg);color:var(--success);border:1px solid rgba(62,200,150,0.25);font-weight:600;display:inline-flex;align-items:center;gap:4px">
+              ${isFinal ? 'Results &amp; Skating' : 'Results &amp; Crossings'}
+            </a>
+            ${!isFinal ? `<a href="/print/dropped/${r.id}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:6px;text-decoration:none;background:var(--surface-active);color:var(--muted);border:1px solid var(--border);font-weight:600;display:inline-flex;align-items:center">Dropped List</a>` : ''}
+            <a href="/print/draw/${r.id}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:6px;text-decoration:none;background:var(--surface-active);color:var(--muted);border:1px solid var(--border);font-weight:600;display:inline-flex;align-items:center">Draw &amp; Heats</a>
+            <a href="/print/checksum/${r.id}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:6px;text-decoration:none;background:var(--surface-active);color:var(--muted);border:1px solid var(--border);font-weight:600;display:inline-flex;align-items:center">Checksum Sheet</a>
+          </div>` : ''}
+        `;
+
+        if (r.status === 'judging') {
+          // Live scoring display
+          const prog = await api(`/api/scrutineer/round/${r.id}/progress`);
+          const totalDances = prog.dances.length;
+          const completedCount = prog.matrix.reduce((acc, m) => {
+            const confirmedAll = m.confirmed.length > 0 && m.confirmed.every(c => c.done);
+            return acc + (confirmedAll ? 1 : 0);
+          }, 0);
+
+          const progressDiv = document.createElement('div');
+          progressDiv.className = 'round-progress';
+          progressDiv.innerHTML = `
+            <span class="live-dot" style="animation: pulse-glow 1.5s infinite"></span>
+            <span>Currently Judging: Completed <strong>${completedCount}/${totalDances}</strong> dances. Results will appear once computed.</span>
+          `;
+          card.appendChild(progressDiv);
+        }
+
+        if (isClosed || r.status === 'computing') {
+          try {
+            // Load and cache results
+            let res = storedResults[r.id];
+            if (!res) {
+              res = await api(`/api/scrutineer/round/${r.id}/results`);
+              storedResults[r.id] = res;
+            }
+
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'results-table-container';
+
+            if (String(res.kind).toLowerCase() === 'final') {
+              // Compute tie range labels: group tied rows and show "13-15" format
+              const rowsWithLabel = computePlaceLabels(res.rows);
+              tableContainer.innerHTML = `
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="text-align: center; width: 80px;">Place</th>
+                      <th style="text-align: center; width: 100px;">#Number</th>
+                      <th>Competitor / Couple</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsWithLabel.map(x => `
+                      <tr>
+                        <td class="td-place">${x.placeLabel}</td>
+                        <td class="td-number">${x.number}</td>
+                        <td class="td-couple">${escapeHtml(name(x))}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+            } else {
+              // Only show dropped-out couples; recalled couples' final place comes from the next round
+              const recalledCount = r.recall_count || res.rows.filter(x => x.recalled).length;
+              const droppedRows = res.rows.filter(x => !x.recalled);
+              const rankedRows = computeRecallRanks(droppedRows, recalledCount + 1);
+
+              const recalledSummary = res.rows.filter(x => x.recalled).length;
+              tableContainer.innerHTML = `
+                <div style="padding:10px 0 12px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  <span><strong style="color:var(--success)">${recalledSummary} couples</strong> advanced to the next round (Places 1–${recalledSummary})</span>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="text-align: center; width: 70px;">Place</th>
+                      <th style="text-align: center; width: 90px;">#Number</th>
+                      <th>Competitor / Couple</th>
+                      <th style="text-align: center; width: 100px;">Crosses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rankedRows.map(x => `
+                      <tr>
+                        <td class="td-place" style="font-size:16px;color:var(--muted)">${x.rankLabel}</td>
+                        <td class="td-number">${x.number}</td>
+                        <td class="td-couple">${escapeHtml(name(x))}</td>
+                        <td class="td-crosses">${x.crosses}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+
+              if (res.rows.some(x => x.borderline_tie)) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'borderline-alert';
+                alertDiv.innerHTML = `
+                  <span style="font-size: 18px;">⚠️</span>
+                  <span><strong>Borderline Tie:</strong> Multiple couples tied at the cut-off score. All tied couples have been advanced.</span>
+                `;
+                card.appendChild(alertDiv);
+              }
+            }
+            card.appendChild(tableContainer);
+          } catch (e) {
+            console.error(`Failed to fetch results for round ${r.id}:`, e);
+            const errDiv = document.createElement('div');
+            errDiv.style.padding = '20px';
+            errDiv.style.color = 'var(--muted)';
+            errDiv.textContent = 'Results computing or unavailable.';
+            card.appendChild(errDiv);
+          }
+        }
+
+        roundsList.appendChild(card);
+      }
+    }
+
+    function name(x) {
+      return x.name2 ? `${x.name1} & ${x.name2}` : x.name1;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Compute display labels for places, showing range for ties.
+     * E.g. if places 13, 13, 13 are tied, all get label "13-15".
+     * Single place with no tie shows just the number.
+     */
+    function computePlaceLabels(rows) {
+      const result = rows.map(r => ({ ...r, placeLabel: String(r.place) }));
+      let i = 0;
+      while (i < result.length) {
+        if (result[i].tie) {
+          // Find the end of this tie group
+          let j = i;
+          while (j < result.length && result[j].place === result[i].place) j++;
+          const start = result[i].place;
+          const end = start + (j - i) - 1;
+          const label = start === end ? String(start) : `${start}-${end}`;
+          for (let k = i; k < j; k++) result[k].placeLabel = label;
+          i = j;
+        } else {
+          i++;
+        }
+      }
+      return result;
+    }
+
+    /**
+     * Compute rank labels for recall/intermediate rounds based on crosses.
+     * Only call this on non-recalled (dropped-out) rows.
+     * offset = recall_count + 1 (where dropped places start)
+     * Assigns range labels like "8-10" for tied ranks.
+     */
+    function computeRecallRanks(rows, offset = 1) {
+      if (!rows.length) return [];
+      const result = rows.map(r => ({ ...r, rankLabel: '' }));
+      // Assign numeric rank starting from offset
+      let rank = offset;
+      for (let i = 0; i < result.length; i++) {
+        if (i > 0 && result[i].crosses !== result[i - 1].crosses) {
+          rank = offset + i;
+        }
+        result[i]._rank = rank;
+      }
+      // Compute tie range labels
+      let i = 0;
+      while (i < result.length) {
+        let j = i;
+        while (j < result.length && result[j].crosses === result[i].crosses) j++;
+        const start = result[i]._rank;
+        const end = start + (j - i) - 1;
+        const label = start === end ? String(start) : `${start}-${end}`;
+        for (let k = i; k < j; k++) result[k].rankLabel = label;
+        i = j;
+      }
+      return result;
+    }
+
+    // Start background polling
+    loadOverview();
+    pollInterval = setInterval(loadOverview, 5000);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
+      });
+    }
+  </script>
+</body>
+</html>

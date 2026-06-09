@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Telemark · Settings</title>
+<link rel="icon" type="image/png" href="/logo_telemark.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#09080d;--surface:rgba(19,17,26,.78);--surface2:rgba(28,25,38,.92);
+  --ink:#ece9f0;--muted:#8d899a;--line:rgba(255,255,255,.08);
+  --accent:#00e5ff;--glow:rgba(0,229,255,.15);
+  --ok:#3ec896;--ok-bg:rgba(62,200,150,.12);
+  --warn:#ffd600;--warn-bg:rgba(255,214,0,.12);
+  --danger:#ff5252;--danger-bg:rgba(255,82,82,.12);
+  --num:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Outfit',-apple-system,sans-serif;
+     font-size:15px;min-height:100vh}
+
+header{display:flex;align-items:center;gap:14px;padding:10px 20px;
+       background:rgba(10,9,14,.88);backdrop-filter:blur(20px);
+       border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.02em;text-decoration:none;
+      background:linear-gradient(135deg,#fff 30%,var(--accent));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sp{flex:1}
+
+main{max-width:780px;margin:0 auto;padding:28px 20px}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+      padding:22px 24px;margin-bottom:18px;backdrop-filter:blur(10px)}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.07em;
+            text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:block;width:3px;height:14px;
+                    background:var(--accent);border-radius:2px}
+.row{display:flex;align-items:center;gap:14px;padding:12px 0;
+     border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none;padding-bottom:0}
+.row-label{flex:1}
+.row-label strong{display:block;font-size:14px;font-weight:600}
+.row-label span{font-size:12px;color:var(--muted)}
+
+/* toggle switch */
+.toggle{position:relative;width:48px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,.1);
+              border:1px solid var(--line);cursor:pointer;transition:.25s}
+.toggle input:checked+.toggle-track{background:var(--ok);border-color:var(--ok)}
+.toggle-track::after{content:'';position:absolute;width:20px;height:20px;
+                     border-radius:50%;background:#fff;top:2px;left:2px;
+                     transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.toggle input:checked+.toggle-track::after{left:24px}
+
+/* inputs */
+input[type=text],input[type=number],input[type=url],input[type=password]{
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);
+  padding:9px 13px;border-radius:9px;font-size:13.5px;font-family:inherit;width:100%}
+input:focus{outline:none;border-color:var(--accent)}
+input.mono{font-family:var(--num);letter-spacing:.05em}
+
+/* server mode selector */
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.mode-card{border:2px solid var(--line);border-radius:12px;padding:14px 16px;
+           cursor:pointer;transition:.2s;position:relative}
+.mode-card:hover{border-color:rgba(255,255,255,.2)}
+.mode-card.selected{border-color:var(--accent);background:var(--glow)}
+.mode-card .mc-icon{font-size:26px;margin-bottom:6px}
+.mode-card .mc-title{font-weight:700;font-size:14px}
+.mode-card .mc-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.mode-card .mc-check{position:absolute;top:10px;right:12px;font-size:18px;
+                      color:var(--accent);display:none}
+.mode-card.selected .mc-check{display:block}
+
+/* network info */
+.net-row{display:flex;align-items:center;justify-content:space-between;
+         padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;
+         margin-bottom:6px;font-size:13px}
+.net-row .addr{font-family:var(--num);font-size:13px;color:var(--accent)}
+.net-row .copy-btn{background:transparent;border:1px solid var(--line);color:var(--muted);
+                   font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;
+                   font-family:inherit}
+.net-row .copy-btn:hover{color:var(--ink);border-color:rgba(255,255,255,.25)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;
+     font-weight:600;font-size:13px;cursor:pointer;border:none;transition:.2s;
+     font-family:inherit}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
+.btn-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-ghost:hover{color:var(--ink)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+
+/* status badge */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+       padding:4px 10px;border-radius:20px;border:1px solid}
+.badge-ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.badge-warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.badge-muted{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--muted)}
+.badge-danger{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+
+/* toast */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);
+       border:1px solid var(--line);border-radius:12px;padding:12px 18px;
+       font-size:13px;font-weight:600;transform:translateY(80px);opacity:0;
+       transition:.3s;z-index:9999}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{border-color:var(--ok);color:var(--ok)}
+#toast.err{border-color:var(--danger);color:var(--danger)}
+
+.section-title{font-size:20px;font-weight:800;margin:32px 0 14px;letter-spacing:-.02em;
+               display:flex;align-items:center;gap:10px}
+.section-title:first-child{margin-top:0}
+
+.hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+
+/* ping indicator */
+#ping-result{font-family:var(--num);font-size:13px;min-height:20px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" id="logo-link" href="/">telemark<span style="-webkit-text-fill-color:var(--accent)">.</span>one</a>
+  <div class="sp"></div>
+  <div id="server-status" class="badge badge-muted"><span class="dot"></span> Checking…</div>
+  <a href="/" id="back-btn" class="btn btn-ghost" style="margin-left:8px;font-size:12px;padding:7px 14px">← Back</a>
+</header>
+
+<main>
+
+<!-- ═══ SERVER MODE ═══════════════════════════════════════════════════ -->
+<div class="section-title">🖥 Server Mode</div>
+<div class="card">
+  <div class="card-title">Where is the server running?</div>
+  <div class="mode-cards">
+    <div class="mode-card" id="mode-render" onclick="setMode('render')">
+      <div class="mc-icon">☁️</div>
+      <div class="mc-title">Render / Cloud</div>
+      <div class="mc-sub">Hosted online. Access from anywhere. Requires internet.</div>
+      <div class="mc-check">✓</div>
+    </div>
+    <div class="mode-card" id="mode-local" onclick="setMode('local')">
+      <div class="mc-icon">🏠</div>
+      <div class="mc-title">Local Network</div>
+      <div class="mc-sub">Runs on venue laptop. Judges connect via WiFi. No internet needed.</div>
+      <div class="mc-check">✓</div>
+    </div>
+  </div>
+
+  <div id="local-settings" style="margin-top:16px;display:none">
+    <div class="row">
+      <div class="row-label">
+        <strong>Local Server URL</strong>
+        <span>The IP address of the laptop running Node.js on your venue WiFi</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="url" id="local-url" class="mono" placeholder="http://192.168.1.X:4000" style="flex:1"/>
+      <button class="btn btn-ghost" onclick="pingServer()">⚡ Test</button>
+    </div>
+    <div id="ping-result"></div>
+    <p class="hint">Find the IP in the terminal when you run <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px">node index.js</code> — it prints all LAN addresses.</p>
+  </div>
+
+  <div id="render-settings" style="margin-top:16px;display:none">
+    <div class="row">
+      <div class="row-label">
+        <strong>Render URL</strong>
+        <span>Your deployed service URL on render.com</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="url" id="render-url" class="mono" placeholder="https://telemark-xxx.onrender.com" style="flex:1"/>
+      <button class="btn btn-ghost" onclick="pingServer()">⚡ Test</button>
+    </div>
+    <div id="ping-result"></div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:16px">
+    <button class="btn btn-primary" onclick="saveMode()">Save & Switch →</button>
+    <button class="btn btn-ghost" onclick="loadNetworkInfo()">🔄 Detect Local IPs</button>
+  </div>
+</div>
+
+<!-- ═══ NETWORK INFO ══════════════════════════════════════════════════ -->
+<div class="section-title">📡 Network Info</div>
+<div class="card">
+  <div class="card-title">Server Addresses <span id="net-refresh-btn" class="badge badge-muted" style="cursor:pointer;margin-left:6px" onclick="loadNetworkInfo()">↻ Refresh</span></div>
+  <div id="net-info"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
+  <div style="margin-top:14px">
+    <div class="card-title">Quick Access Links</div>
+    <div id="quick-links"></div>
+  </div>
+</div>
+
+<!-- ═══ COMPETITION ═══════════════════════════════════════════════════ -->
+<div class="section-title">🏆 Competition</div>
+<div class="card">
+  <div class="card-title">Active Competition</div>
+  <div id="comp-info" style="font-size:13px;color:var(--muted)">Loading…</div>
+</div>
+
+<!-- ═══ DATABASE ══════════════════════════════════════════════════════ -->
+<div class="section-title">💾 Database & Backup</div>
+<div class="card">
+  <div class="card-title">Backup</div>
+  <div class="row">
+    <div class="row-label">
+      <strong>Create Backup Now</strong>
+      <span>Saves a snapshot of the current database to the backups folder</span>
+    </div>
+    <button class="btn btn-ok" onclick="createBackup()">💾 Backup</button>
+  </div>
+  <div class="row">
+    <div class="row-label">
+      <strong>Recent Backups</strong>
+      <span>Automatically created after each round is closed</span>
+    </div>
+  </div>
+  <div id="backups-list" style="margin-top:8px;font-size:13px;color:var(--muted)">Loading…</div>
+</div>
+
+<!-- ═══ DANCESPORT.GE ══════════════════════════════════════════════════ -->
+<div class="section-title">🔗 dancesport.ge Sync</div>
+<div class="card">
+  <div class="card-title">Connection</div>
+  <div id="sync-status" style="font-size:13px;color:var(--muted)">Checking…</div>
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="testDancesport()">⚡ Test Connection</button>
+    <button class="btn btn-ghost" onclick="pushResults()">⬆ Push Results</button>
+  </div>
+</div>
+
+<!-- ═══ DISPLAY ═══════════════════════════════════════════════════════ -->
+<div class="section-title">🎨 Display</div>
+<div class="card">
+  <div class="card-title">Preferences</div>
+  <div class="row">
+    <div class="row-label">
+      <strong>Language</strong>
+      <span>Interface language (UI only — data stays in original language)</span>
+    </div>
+    <select id="lang-select" style="background:rgba(255,255,255,.05);border:1px solid var(--line);
+            color:var(--ink);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px">
+      <option value="en">English</option>
+      <option value="ka">ქართული</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="row-label">
+      <strong>Show Georgian Names</strong>
+      <span>Display name1_ka / name2_ka where available</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="toggle-ka" onchange="savePref('showKa', this.checked)"/>
+      <div class="toggle-track"></div>
+    </label>
+  </div>
+  <div class="row">
+    <div class="row-label">
+      <strong>Auto-refresh Interval</strong>
+      <span>How often the scrutineer dashboard auto-refreshes (seconds, 0 = off)</span>
+    </div>
+    <input type="number" id="refresh-interval" min="0" max="60" value="10"
+           style="width:80px;text-align:center;font-family:var(--num)"
+           onchange="savePref('refreshInterval', +this.value)"/>
+  </div>
+</div>
+
+<!-- ═══ ABOUT ════════════════════════════════════════════════════════ -->
+<div class="section-title">ℹ About</div>
+<div class="card">
+  <div class="card-title">Telemark.one</div>
+  <div style="font-size:13px;color:var(--muted);line-height:1.8">
+    <div>Version: <b style="color:var(--ink)">2.0.0</b></div>
+    <div>WDSF Scrutineering Software — Skating System Rules 1–11</div>
+    <div>Node.js + SQLite · WebSockets · dancesport.ge sync</div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <a href="/scrutineer.html" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">Scrutineer</a>
+      <a href="/chairman.html" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">Chairman</a>
+      <a href="/judges.html" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">Judges</a>
+      <a href="/results.html" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">Results</a>
+    </div>
+  </div>
+</div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Settings storage ───────────────────────────────────────────────────
+const SETTINGS_KEY = 'telemark_settings';
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); }
+  catch(_) { return {}; }
+}
+function saveSettings(s) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3000);
+}
+
+// ── Determine current server base URL ─────────────────────────────────
+function getBase() {
+  const s = loadSettings();
+  if (s.mode === 'local' && s.localUrl) return s.localUrl.replace(/\/$/, '');
+  if (s.mode === 'render' && s.renderUrl) return s.renderUrl.replace(/\/$/, '');
+  return ''; // same origin
+}
+
+const api = (path) => fetch(getBase() + path).then(async r => {
+  const d = await r.json(); if (!r.ok) throw new Error(d.error || r.statusText); return d;
+});
+const post = (path, body={}) => fetch(getBase() + path, {
+  method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+}).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || r.statusText); return d; });
+
+// ── Mode selector ──────────────────────────────────────────────────────
+function setMode(mode) {
+  document.getElementById('mode-render').classList.toggle('selected', mode === 'render');
+  document.getElementById('mode-local').classList.toggle('selected', mode === 'local');
+  document.getElementById('render-settings').style.display = mode === 'render' ? '' : 'none';
+  document.getElementById('local-settings').style.display  = mode === 'local'  ? '' : 'none';
+}
+
+function saveMode() {
+  const s = loadSettings();
+  const renderSelected = document.getElementById('mode-render').classList.contains('selected');
+  s.mode = renderSelected ? 'render' : 'local';
+  if (renderSelected) {
+    s.renderUrl = document.getElementById('render-url').value.trim() || window.location.origin;
+  } else {
+    s.localUrl = document.getElementById('local-url').value.trim();
+  }
+  saveSettings(s);
+  // Publish to all pages via BroadcastChannel
+  try { new BroadcastChannel('telemark').postMessage({ type:'settings', settings:s }); } catch(_){}
+  toast('Settings saved! Pages will use the new server.', 'ok');
+  loadNetworkInfo();
+  checkServerStatus();
+}
+
+async function pingServer() {
+  const renderSelected = document.getElementById('mode-render').classList.contains('selected');
+  const url = renderSelected
+    ? document.getElementById('render-url').value.trim()
+    : document.getElementById('local-url').value.trim();
+  const el = document.getElementById('ping-result');
+  if (!url) { el.textContent = '⚠ Enter a URL first'; el.style.color = 'var(--warn)'; return; }
+  el.textContent = '⏳ Pinging…'; el.style.color = 'var(--muted)';
+  const t0 = Date.now();
+  try {
+    await fetch(url + '/api/competition', { signal: AbortSignal.timeout(4000) });
+    const ms = Date.now() - t0;
+    el.textContent = `✅ Online — ${ms}ms`;
+    el.style.color = 'var(--ok)';
+  } catch(e) {
+    el.textContent = `❌ Unreachable — ${e.message}`;
+    el.style.color = 'var(--danger)';
+  }
+}
+
+// ── Network info ───────────────────────────────────────────────────────
+async function loadNetworkInfo() {
+  try {
+    const info = await api('/api/network-info');
+    const el = document.getElementById('net-info');
+    const ql = document.getElementById('quick-links');
+    if (!info.addresses || !info.addresses.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px">No LAN addresses detected (cloud server).</div>';
+    } else {
+      el.innerHTML = info.addresses.map(ip => `
+        <div class="net-row">
+          <span>📡 LAN: <span class="addr">http://${ip}:${info.port}</span></span>
+          <button class="copy-btn" onclick="copyText('http://${ip}:${info.port}')">Copy</button>
+        </div>`).join('');
+    }
+    // Quick links
+    const base = info.addresses.length ? `http://${info.addresses[0]}:${info.port}` : '';
+    if (base) {
+      ql.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          <a href="${base}/judge.html" target="_blank" class="btn btn-ghost" style="font-size:12px">📱 Judge Tablet</a>
+          <a href="${base}/scrutineer.html" target="_blank" class="btn btn-ghost" style="font-size:12px">🖥 Scrutineer</a>
+          <a href="${base}/chairman.html" target="_blank" class="btn btn-ghost" style="font-size:12px">🎯 Chairman</a>
+          <a href="${base}/results.html" target="_blank" class="btn btn-ghost" style="font-size:12px">📊 Results Board</a>
+        </div>`;
+    } else {
+      ql.innerHTML = '<div style="font-size:13px;color:var(--muted)">Links available when running locally.</div>';
+    }
+  } catch(_) {
+    document.getElementById('net-info').innerHTML = '<div style="color:var(--muted);font-size:13px">Server not reachable.</div>';
+  }
+}
+
+// ── Server status ──────────────────────────────────────────────────────
+async function checkServerStatus() {
+  const el = document.getElementById('server-status');
+  try {
+    const t0 = Date.now();
+    await api('/api/competition');
+    const ms = Date.now() - t0;
+    el.className = 'badge badge-ok';
+    el.innerHTML = `<span class="dot"></span> Online · ${ms}ms`;
+  } catch(_) {
+    el.className = 'badge badge-danger';
+    el.innerHTML = `<span class="dot"></span> Offline`;
+  }
+}
+
+// ── Competition info ───────────────────────────────────────────────────
+async function loadCompInfo() {
+  try {
+    const comp = await api('/api/competition');
+    const el = document.getElementById('comp-info');
+    if (!comp) { el.innerHTML = '<span style="color:var(--muted)">No competition loaded.</span>'; return; }
+    el.innerHTML = `
+      <div style="font-size:16px;font-weight:700;color:var(--ink)">${esc(comp.name)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">
+        ${comp.event_date ? comp.event_date + ' · ' : ''}${esc(comp.location||'')}
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <span class="badge ${comp.is_locked ? 'badge-warn' : 'badge-ok'}">
+          <span class="dot"></span> ${comp.is_locked ? 'Locked' : 'Unlocked'}
+        </span>
+      </div>`;
+  } catch(_) {}
+}
+
+// ── Backups ────────────────────────────────────────────────────────────
+async function loadBackups() {
+  try {
+    const { backups } = await api('/api/backups');
+    const el = document.getElementById('backups-list');
+    if (!backups || !backups.length) { el.textContent = 'No backups yet.'; return; }
+    const recent = backups.slice(-5).reverse();
+    el.innerHTML = recent.map(b => `
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding:6px 0;border-bottom:1px solid var(--line);font-family:var(--num);font-size:12px">
+        <span style="color:var(--ink)">${esc(b)}</span>
+      </div>`).join('') +
+      (backups.length > 5 ? `<div style="color:var(--muted);font-size:12px;margin-top:6px">+${backups.length-5} more</div>` : '');
+  } catch(_) { document.getElementById('backups-list').textContent = 'Backups unavailable.'; }
+}
+
+async function createBackup() {
+  try {
+    const r = await post('/api/backup');
+    toast('Backup created ✓', 'ok');
+    loadBackups();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Sync status ────────────────────────────────────────────────────────
+async function testDancesport() {
+  const el = document.getElementById('sync-status');
+  el.textContent = '⏳ Testing connection…';
+  try {
+    const list = await api('/api/tournaments');
+    el.innerHTML = `<span style="color:var(--ok)">✅ Connected — ${list.length} tournaments available on dancesport.ge</span>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--danger)">❌ ${esc(e.message)}</span>`;
+  }
+}
+
+async function pushResults() {
+  try {
+    const r = await post('/api/push-results');
+    toast(`Results pushed: ${r.pushed} entries`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Preferences ───────────────────────────────────────────────────────
+function savePref(key, value) {
+  const s = loadSettings();
+  s[key] = value;
+  saveSettings(s);
+  try { new BroadcastChannel('telemark').postMessage({ type:'settings', settings:s }); } catch(_){}
+  toast('Preference saved', 'ok');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied! ' + text, 'ok')).catch(() => toast('Copy failed', 'err'));
+}
+
+function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ── Init ───────────────────────────────────────────────────────────────
+(function init(){
+  const s = loadSettings();
+  const mode = s.mode || 'render';
+  setMode(mode);
+  if (s.localUrl)  document.getElementById('local-url').value  = s.localUrl;
+  if (s.renderUrl) document.getElementById('render-url').value = s.renderUrl;
+  document.getElementById('toggle-ka').checked = !!s.showKa;
+  document.getElementById('refresh-interval').value = s.refreshInterval ?? 10;
+  document.getElementById('lang-select').value = s.lang || 'en';
+  document.getElementById('lang-select').onchange = () => savePref('lang', document.getElementById('lang-select').value);
+  checkServerStatus();
+  loadNetworkInfo();
+  loadCompInfo();
+  loadBackups();
+})();
+
+// ── Referrer-based back navigation ───────────────────────────────────
+(function initBackNavigation(){
+  const referrer = document.referrer;
+  const backBtn = document.getElementById('back-btn');
+  const logoLink = document.getElementById('logo-link');
+
+  let targetUrl = '/';
+
+  if (referrer) {
+    try {
+      const refUrl = new URL(referrer);
+      const pathname = refUrl.pathname;
+      if (pathname.endsWith('/scrutineer.html') || 
+          pathname.endsWith('/chairman.html') || 
+          pathname.endsWith('/judges.html') || 
+          pathname.endsWith('/results.html')) {
+        targetUrl = referrer;
+      }
+    } catch (e) {}
+  }
+
+  if (targetUrl === '/') {
+    if (localStorage.getItem('telemark_scrutineer_token')) {
+      targetUrl = '/scrutineer.html';
+    } else if (localStorage.getItem('chairman_token')) {
+      targetUrl = '/chairman.html';
+    }
+  }
+
+  backBtn.href = targetUrl;
+  logoLink.href = targetUrl;
+
+  backBtn.addEventListener('click', (e) => {
+    if (referrer && targetUrl !== '/') {
+      e.preventDefault();
+      window.history.back();
+    }
+  });
+})();
+</script>
+</body>
+</html>

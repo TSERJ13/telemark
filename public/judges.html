@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="utf-8" />
+<title>telemark · Judge Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/png" href="/logo_telemark.png" />
+<link rel="apple-touch-icon" href="/logo_telemark.png" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #09080d;
+    --surface: rgba(22, 19, 32, 0.5);
+    --surface2: rgba(30, 26, 44, 0.6);
+    --surface-active: rgba(45, 39, 66, 0.8);
+    --line: rgba(255,255,255,0.06);
+    --accent: #f06a37;
+    --accent-glow: rgba(240, 106, 55, 0.12);
+    --ink: #f5f4f7;
+    --muted: #9590a8;
+    --ok: #3ec896;
+    --ok-bg: rgba(62, 200, 150, 0.1);
+    --warn: #f3b73e;
+    --warn-bg: rgba(243, 183, 62, 0.1);
+    --danger: #ff5c5c;
+    --danger-bg: rgba(255, 92, 92, 0.1);
+    --num: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: rgba(9, 8, 13, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+    z-index: 10;
+  }
+  header .logo {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header .logo b { color: var(--accent); }
+  header .sp { flex: 1; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #444; transition: background 0.3s; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  
+  .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px var(--accent-glow); }
+  .btn.primary:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(240, 106, 55, 0.25); }
+  .btn.danger { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(255,92,92,0.15); }
+  .btn.danger:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(255,92,92,0.3); }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+  .btn.ghost:hover { background: var(--surface-active); }
+
+  /* Mode switch styling */
+  .mode-switch {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 3px;
+    margin-left: 20px;
+  }
+  .mode-btn {
+    padding: 8px 16px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .mode-btn.active {
+    background: var(--surface-active);
+    color: #fff;
+  }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .left-pane {
+    background: rgba(19, 17, 26, 0.4);
+    border-right: 1px solid var(--line);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+  
+  .right-pane {
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h2 { margin: 0 0 6px; font-size: 24px; font-weight: 700; }
+  h3 { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  
+  .add-box {
+    background: rgba(19, 17, 26, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .add-box input, .edit-box input, .edit-box select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .add-box input:focus, .edit-box input:focus, .edit-box select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .add-box input::placeholder, .edit-box input::placeholder { color: var(--muted); }
+
+  .edit-box select {
+    cursor: pointer;
+  }
+  .edit-box select option {
+    background: #111;
+    color: #fff;
+  }
+
+  .list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* List items */
+  .list-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .list-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: var(--surface2);
+  }
+  .list-card.active {
+    border-color: var(--accent);
+    background: var(--surface-active);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .card-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    flex: 0 0 auto;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .list-card.active .card-icon {
+    background: var(--accent-glow);
+    border-color: rgba(240,106,55,0.3);
+    color: var(--accent);
+  }
+  .card-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .card-title {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .card-badge {
+    font-family: var(--num);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--warn);
+    background: var(--warn-bg);
+    border: 1px solid rgba(243,183,62,0.15);
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .empty-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    height: 60%;
+    text-align: center;
+    font-size: 16px;
+    gap: 12px;
+  }
+
+  .assignment-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+    max-width: 700px;
+  }
+
+  /* Beautiful Toggle Switch style */
+  .switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 20px;
+    transition: all 0.2s ease;
+  }
+  .switch-row:hover {
+    border-color: rgba(255,255,255,0.12);
+    background: var(--surface2);
+  }
+  .switch-row.active {
+    border-color: rgba(62, 200, 150, 0.25);
+    background: rgba(62, 200, 150, 0.02);
+  }
+  .switch-label {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .switch-label span {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: 8px;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--surface-active);
+    transition: .3s;
+    border-radius: 34px;
+    border: 1px solid var(--line);
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--muted);
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--ok-bg);
+    border-color: var(--ok);
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+    background-color: var(--ok);
+  }
+
+  .edit-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 700px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-group.full {
+    grid-column: span 2;
+  }
+  .form-group label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  /* Random panel drawer styling */
+  .random-toolbar {
+    background: var(--accent-glow);
+    border: 1px solid rgba(240,106,55,0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .random-toolbar-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .random-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .random-btns button {
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--ink);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .random-btns button:hover {
+    background: var(--surface-active);
+    border-color: var(--accent);
+  }
+</style>
+  <script src="/ui.js"></script>
+  <script src="/i18n.js"></script>
+<script src="/telemark-config.js"></script>
+</head>
+<body>
+
+<header>
+  <span class="logo">tele<b>mark</b></span>
+  <div class="mode-switch">
+    <button class="mode-btn active" id="mode-judge" onclick="switchMode('judge')">⚖ მსაჯების მიხედვით</button>
+    <button class="mode-btn" id="mode-category" onclick="switchMode('category')">🏆 კატეგორიების მიხედვით</button>
+    <button class="mode-btn" id="mode-grid" onclick="switchMode('grid')">📊 მატრიცა (Excel)</button>
+  </div>
+  <span class="sp"></span>
+  <span id="compname" style="color:var(--muted);font-size:13px;margin-right:15px;font-weight:700"></span>
+  <a href="/scrutineer.html" class="btn ghost" style="padding:6px 12px;font-size:12px;border-radius:6px;height:29px;display:flex;align-items:center;gap:6px">
+    ◀ უკან
+  </a>
+  <span class="dot" id="conn"></span>
+<a href="/settings.html" title="Settings" style="color:var(--muted);text-decoration:none;font-size:18px;padding:4px 8px;border-radius:6px" onmouseover="this.style.color='var(--ink)'" title="Settings">⚙</a>
+</header>
+
+<div class="wrap">
+  <!-- LEFT PANE -->
+  <div class="left-pane">
+    <div id="leftPaneHeader">
+      <h2 id="leftPaneTitle" style="margin-bottom: 4px;">⚖ მსაჯები</h2>
+      <div id="leftPaneSubtitle" style="color:var(--muted);font-size:13px">დაამატეთ მსაჯები და მართეთ მათი პინები</div>
+    </div>
+    
+    <div class="add-box" id="addBox">
+      <input type="text" id="judgeNameInput" placeholder="მსაჯის სახელი (ლათინური)" onkeydown="if(event.key==='Enter')addJudge()" />
+      <input type="text" id="judgeStudioInput" placeholder="Studio (არასავალდებულო, კონფლიქტების დასადგენად)" onkeydown="if(event.key==='Enter')addJudge()" />
+      <button class="btn primary" id="judgeAddBtn" onclick="addJudge()">+ მსაჯის დამატება</button>
+    </div>
+
+    <div class="list-container" id="listContainer">
+      <!-- Loaded dynamically -->
+    </div>
+  </div>
+
+  <!-- RIGHT PANE -->
+  <div class="right-pane" id="rightPane">
+    <div class="empty-pane">
+      <span style="font-size:42px">⚖</span>
+      <div id="emptyPaneText">აირჩიეთ Judge მარცხენა სიიდან Categoriesს მისანიჭებლად</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// API request helper with error mapping
+const api=(p,o)=>fetch(p,o).then(async r=>{
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+});
+const POST=(p,b)=>api(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+const PUT=(p,b)=>api(p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+const DELETE=(p)=>api(p,{method:'DELETE'});
+
+let judges = [];
+let categories = [];
+let selectedId = null; // Can be official ID or Category ID depending on currentViewMode
+let currentViewMode = 'judge'; // 'judge' or 'category'
+
+function connectWS(){
+  const ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);
+  ws.onopen=()=>document.getElementById('conn').classList.add('on');
+  ws.onclose=()=>{document.getElementById('conn').classList.remove('on');setTimeout(connectWS,1500);};
+  ws.onmessage=async()=>{
+    await loadData();
+    if (selectedId || currentViewMode === 'grid') {
+      renderDetails();
+    }
+  };
+}
+
+async function boot() {
+  const comp=await api('/api/competition');
+  document.getElementById('compname').textContent=comp?comp.name:'';
+  await loadData();
+  connectWS();
+}
+
+async function loadData() {
+  try {
+    judges = await api('/api/judges/assignments');
+    const overview = await api('/api/scrutineer/overview');
+    categories = overview.categories || [];
+    renderLeftList();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function switchMode(mode) {
+  if (currentViewMode === mode) return;
+  currentViewMode = mode;
+  selectedId = null;
+  
+  document.getElementById('mode-judge').classList.toggle('active', mode === 'judge');
+  document.getElementById('mode-category').classList.toggle('active', mode === 'category');
+  document.getElementById('mode-grid').classList.toggle('active', mode === 'grid');
+  
+  const wrap = document.querySelector('.wrap');
+  const leftPane = document.querySelector('.left-pane');
+  const addBox = document.getElementById('addBox');
+  const title = document.getElementById('leftPaneTitle');
+  const subtitle = document.getElementById('leftPaneSubtitle');
+  
+  if (mode === 'grid') {
+    wrap.style.gridTemplateColumns = '1fr';
+    leftPane.style.display = 'none';
+  } else {
+    wrap.style.gridTemplateColumns = '420px 1fr';
+    leftPane.style.display = 'flex';
+    if (mode === 'judge') {
+      title.textContent = '⚖ მსაჯები';
+      subtitle.textContent = 'დაამატეთ მსაჯები და მართეთ მათი პინები';
+      addBox.style.display = 'flex';
+    } else {
+      title.textContent = '🏆 კატეგორიები';
+      subtitle.textContent = 'აირჩიეთ კატეგორია მსაჯთა პანელის დასანიშნად';
+      addBox.style.display = 'none';
+    }
+  }
+  
+  renderLeftList();
+  renderDetails();
+}
+
+function renderLeftList() {
+  const container = document.getElementById('listContainer');
+  container.innerHTML = '';
+  
+  if (currentViewMode === 'grid') return;
+  
+  if (currentViewMode === 'judge') {
+    if (judges.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px 0;font-size:14px">მსაჯები არ არის</div>';
+      return;
+    }
+    
+    judges.forEach(j => {
+      const active = selectedId === j.id;
+      const card = document.createElement('div');
+      card.className = 'list-card' + (active ? ' active' : '');
+      card.onclick = () => selectItem(j.id);
+      
+      const letter = j.role === 'chairman' ? '👑' : (j.judge_letter || '?');
+      const sub = j.role === 'chairman' ? 'Chairman' : `Judge &middot; ${j.categories.length} categories`;
+      
+      card.innerHTML = `
+        <div class="card-icon">${letter}</div>
+        <div class="card-main">
+          <div class="card-title">${j.full_name}</div>
+          <div class="card-subtitle">${sub} ${j.studio_name ? '&middot; 🏠 ' + j.studio_name : ''}</div>
+        </div>
+        <div class="card-badge">${j.pin || '----'}</div>
+      `;
+      container.appendChild(card);
+    });
+  } else {
+    if (categories.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px 0;font-size:14px">კატეგორიები არ არის</div>';
+      return;
+    }
+    
+    categories.forEach(c => {
+      const active = selectedId === c.id;
+      const card = document.createElement('div');
+      card.className = 'list-card' + (active ? ' active' : '');
+      card.onclick = () => selectItem(c.id);
+      
+      // Count judges assigned to this category
+      const assignedJudges = judges.filter(j => j.categories.includes(c.id));
+      
+      card.innerHTML = `
+        <div class="card-icon">🏆</div>
+        <div class="card-main">
+          <div class="card-title">${c.name}</div>
+          <div class="card-subtitle">${c.entry_count} წყვილი &middot; ${assignedJudges.length} მსაჯი</div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+}
+
+function selectItem(id) {
+  selectedId = id;
+  renderLeftList();
+  renderDetails();
+}
+
+function renderDetails() {
+  const pane = document.getElementById('rightPane');
+  
+  if (currentViewMode === 'grid') {
+    const activeJudges = judges.filter(j => j.role === 'judge');
+    
+    const getCatColor = (name) => {
+      const n = name.toLowerCase();
+      if (n.includes('juvenile') || n.includes('ბავშვ')) return { bg: 'rgba(76, 175, 80, 0.15)', border: '#4caf50', text: '#a5d6a7' };
+      if (n.includes('junior') || n.includes('იუნიორ')) return { bg: 'rgba(255, 235, 59, 0.12)', border: '#fbc02d', text: '#ffe082' };
+      if (n.includes('youth') || n.includes('ახალგაზრდ')) return { bg: 'rgba(255, 152, 0, 0.12)', border: '#f57c00', text: '#ffcc80' };
+      if (n.includes('under 21') || n.includes('21-მდე') || n.includes('u21') || n.includes('u-21')) return { bg: 'rgba(244, 67, 54, 0.12)', border: '#e53935', text: '#ef9a9a' };
+      if (n.includes('adult') || n.includes('დიდებ') || n.includes('seniors') || n.includes('senior') || n.includes('სენიორ')) return { bg: 'rgba(33, 150, 243, 0.15)', border: '#1e88e5', text: '#90caf9' };
+      if (n.includes('pro-am') || n.includes('proam') || n.includes('პრო-ამ')) return { bg: 'rgba(156, 39, 176, 0.12)', border: '#8e24aa', text: '#ce93d8' };
+      return { bg: '#09080d', border: 'var(--line)', text: 'var(--ink)' };
+    };
+    
+    let headersHtml = activeJudges.map(j => `
+      <th style="padding:12px 8px; border:1px solid var(--line); text-align:center; min-width:90px;" title="${j.full_name}">
+        <div style="font-weight:800; color:var(--accent); font-family:var(--num); font-size:15px; margin-bottom:2px;">${j.judge_letter || '?'}</div>
+        <div style="font-size:12px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;">${j.full_name.split(' ')[0]}</div>
+        <div style="font-size:11px; color:var(--warn); font-family:var(--num); font-weight:700; margin-top:2px; background:var(--warn-bg); border-radius:4px; padding:1px 4px; display:inline-block;">${j.pin || '----'}</div>
+      </th>
+    `).join('');
+
+    let rowsHtml = categories.map(c => {
+      const assignedIds = judges.filter(j => j.categories.includes(c.id)).map(j => j.id);
+      const color = getCatColor(c.name);
+      
+      let cellsHtml = activeJudges.map(j => {
+        const isAssigned = assignedIds.includes(j.id);
+        return `
+          <td style="text-align:center; padding:8px; border:1px solid var(--line); background:${isAssigned ? 'rgba(62,200,150,0.03)' : 'transparent'}">
+            <input type="checkbox" ${isAssigned ? 'checked' : ''} 
+              onchange="toggleGridAssignment(${c.id}, ${j.id}, this)" 
+              style="width:22px; height:22px; cursor:pointer; accent-color:var(--ok);" />
+          </td>
+        `;
+      }).join('');
+
+      return `
+        <tr style="border-bottom:1px solid var(--line); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:12px 16px; text-align:left; font-weight:600; border:1px solid var(--line); position:sticky; left:0; background:${color.bg}; border-left:4px solid ${color.border}; z-index:5; box-shadow: 2px 0 5px rgba(0,0,0,0.3);">
+            <div style="font-size:14px; color:${color.text}; font-weight:700">${c.name}</div>
+            <div style="font-size:11px; color:var(--muted); font-weight:500; margin-top:2px;">${c.entry_count} წყვილი</div>
+          </td>
+          ${cellsHtml}
+        </tr>
+      `;
+    }).join('');
+
+    pane.innerHTML = `
+      <h2>მსაჯების განაწილების მატრიცა (Excel)</h2>
+      <div class="sub">ვერტიკალურად კატეგორიები, ჰორიზონტალურად მსაჯები. მონიშნეთ ჩექბოქსები ვინ სად უნდა იმსაჯოს.</div>
+
+      <!-- Action buttons for printing -->
+      <div style="display:flex; gap:12px; margin-bottom:24px;">
+        <a href="/print/judges-summary" target="_blank" class="btn ghost" style="padding:10px 16px; font-size:13px; font-weight:700; border-color:rgba(255,255,255,0.15); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          📋 ბეჭდვა ერთად (PIN და კატეგორიები)
+        </a>
+        <a href="/print/judges-slips" target="_blank" class="btn ghost" style="padding:10px 16px; font-size:13px; font-weight:700; border-color:rgba(255,255,255,0.15); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          ✂️ ბეჭდვა ცალ-ცალკე (ბარათები)
+        </a>
+      </div>
+
+      <!-- Quick add judge directly from the matrix -->
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; align-items:center;">
+        <input type="text" id="gridJudgeName" placeholder="მსაჯის სახელი (ლათინური)"
+          onkeydown="if(event.key==='Enter')addJudgeFromGrid()"
+          style="flex:1; min-width:220px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
+        <input type="text" id="gridJudgeStudio" placeholder="Studio (არასავალდებულო)"
+          onkeydown="if(event.key==='Enter')addJudgeFromGrid()"
+          style="flex:1; min-width:200px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
+        <button class="btn primary" id="gridJudgeAddBtn" onclick="addJudgeFromGrid()" style="padding:10px 16px; font-weight:700; white-space:nowrap;">+ მსაჯის დამატება</button>
+      </div>
+
+      <div style="width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:16px; background:rgba(19, 17, 26, 0.4); box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+        <table style="width:100%; border-collapse:collapse; font-size:13px; border-style: hidden;">
+          <thead>
+            <tr style="background:var(--surface2);">
+              <th style="text-align:left; padding:16px; border:1px solid var(--line); position:sticky; left:0; background:#1e1a2c; z-index:6; min-width:200px; box-shadow: 2px 0 5px rgba(0,0,0,0.3);">კატეგორია</th>
+              ${headersHtml}
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml || `<tr><td colspan="100" class="muted" style="text-align:center; padding:32px;">მსაჯები ან კატეგორიები არ არის ნაპოვნი</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+    return;
+  }
+
+  if (!selectedId) {
+    const text = currentViewMode === 'judge' 
+      ? 'აირჩიეთ მსაჯი მარცხენა სიიდან კატეგორიების მისანიჭებლად და მონაცემების შესაცვლელად'
+      : 'აირჩიეთ კატეგორია მარცხენა სიიდან მსაჯთა პანელის შესადგენად';
+    
+    pane.innerHTML = `
+      <div class="empty-pane">
+        <span style="font-size:42px">${currentViewMode === 'judge' ? '⚖' : '🏆'}</span>
+        <div id="emptyPaneText">${text}</div>
+      </div>
+    `;
+    return;
+  }
+  
+  if (currentViewMode === 'judge') {
+    const judge = judges.find(j => j.id === selectedId);
+    if (!judge) return;
+    
+    pane.innerHTML = `
+      <h2>მსაჯის რედაქტირება</h2>
+      <div class="sub">შეცვალეთ მსაჯის სახელი, როლი ან პინ კოდი</div>
+      
+      <div class="edit-form-grid">
+        <div class="form-group full">
+          <label>Full Name (Latin)</label>
+          <input type="text" id="editName" value="${judge.full_name}" />
+        </div>
+        <div class="form-group full">
+          <label>Studio</label>
+          <input type="text" id="editStudio" value="${judge.studio_name || ''}" placeholder="Optional (e.g. Tedo Studio)" />
+        </div>
+        <div class="form-group">
+          <label>Tournament Role</label>
+          <select id="editRole" onchange="toggleFormRole(this.value)">
+            <option value="judge" ${judge.role === 'judge' ? 'selected' : ''}>⚖ მსაჯი (Judge)</option>
+            <option value="chairman" ${judge.role === 'chairman' ? 'selected' : ''}>👑 მთავარი მსაჯი (Chairman)</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex; flex-direction:row; gap:16px; align-items:center;">
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+            <label>Tablet PIN code (4 digits)</label>
+            <input type="text" id="editPin" maxlength="4" value="${judge.pin || ''}" style="font-family:var(--num); font-weight:800; letter-spacing:2px" />
+          </div>
+          <div id="pinQrContainer" style="flex:0 0 auto; width:56px; height:56px; display:flex; align-items:center; justify-content:center; background:var(--surface2); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-top:18px;">
+            <!-- QR image will be loaded dynamically -->
+          </div>
+        </div>
+      </div>
+      
+      <div style="display:flex; gap:12px; margin-bottom:40px; max-width:700px">
+        <button class="btn primary" onclick="saveJudgeDetails(${judge.id})">💾 ცვლილებების შენახვა</button>
+        <button class="btn danger" onclick="deleteJudge(${judge.id})">✕ მსაჯის წაშლა</button>
+      </div>
+      
+      <div id="judgeCategoryAssignSection" style="display:${judge.role === 'chairman' ? 'none' : 'block'}">
+        <h3>კატეგორიების მინიჭება</h3>
+        <p class="sub" style="margin-bottom:16px">მონიშნეთ კატეგორიები, რომელთაც ეს მსაჯი შეაფასებს</p>
+        <div class="assignment-grid" id="assignmentGrid">
+          <!-- Populated below -->
+        </div>
+      </div>
+    `;
+    
+    const qrContainer = document.getElementById('pinQrContainer');
+    if (qrContainer) {
+      if (judge.pin && judge.pin.trim().length === 4) {
+        const protocol = window.location.protocol;
+        const host = window.location.host || 'telemark.one';
+        const qrUrl = `${protocol}//${host}/judge.html?pin=${judge.pin}`;
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent(qrUrl)}`;
+        qrContainer.innerHTML = `<img src="${qrSrc}" width="48" height="48" style="border-radius:4px" alt="QR" title="Scan to Login" />`;
+      } else {
+        qrContainer.innerHTML = `<span style="font-size:16px; color:var(--muted)" title="No PIN">❓</span>`;
+      }
+    }
+
+    if (judge.role !== 'chairman') {
+      const grid = document.getElementById('assignmentGrid');
+      if (categories.length === 0) {
+        grid.innerHTML = '<div style="color:var(--muted)">კატეგორიები არ არის</div>';
+        return;
+      }
+      
+      categories.forEach(c => {
+        const isAssigned = judge.categories.includes(c.id);
+        const row = document.createElement('div');
+        row.className = 'switch-row' + (isAssigned ? ' active' : '');
+        row.innerHTML = `
+          <div class="switch-label">${c.name} <span>(${c.entry_count} წყვილი)</span></div>
+          <label class="switch">
+            <input type="checkbox" ${isAssigned ? 'checked' : ''} />
+            <span class="slider"></span>
+          </label>
+        `;
+        
+        const cb = row.querySelector('input');
+        cb.onchange = async () => {
+          cb.disabled = true;
+          try {
+            if (cb.checked) {
+              await fetch(`/api/categories/${c.id}/judges/${judge.id}`, { method: 'POST' });
+              row.classList.add('active');
+            } else {
+              await fetch(`/api/categories/${c.id}/judges/${judge.id}`, { method: 'DELETE' });
+              row.classList.remove('active');
+            }
+            await loadData();
+          } catch(err) {
+            cb.checked = !cb.checked;
+            showToast('Error: ' + err.message);
+          } finally {
+            cb.disabled = false;
+          }
+        };
+        grid.appendChild(row);
+      });
+    }
+  } else {
+    // Category-centric assignment
+    const cat = categories.find(c => c.id === selectedId);
+    if (!cat) return;
+    
+    // Assigned judge IDs
+    const assignedIds = judges.filter(j => j.categories.includes(cat.id)).map(j => j.id);
+    
+    pane.innerHTML = `
+      <h2>კატეგორიის მსაჯთა პანელი</h2>
+      <div class="sub">კატეგორია: <strong style="color:var(--accent)">${cat.name}</strong> (${cat.entry_count} წყვილი)</div>
+      
+      <!-- Random Panel Select Toolbar -->
+      <div class="random-toolbar">
+        <div class="random-toolbar-title">🎲 მსაჯთა პანელის ავტომატური შერჩევა (რანდომულად)</div>
+        <div style="font-size:12px; color:var(--muted)">აირჩიეთ მსაჯების რაოდენობა არსებული პანელიდან</div>
+        <div class="random-btns">
+          <button onclick="assignRandomJudges(${cat.id}, 5)">5 მსაჯი</button>
+          <button onclick="assignRandomJudges(${cat.id}, 7)">7 მსაჯი</button>
+          <button onclick="assignRandomJudges(${cat.id}, 9)">9 მსაჯი</button>
+          <button onclick="assignRandomJudges(${cat.id}, 11)">11 მსაჯი</button>
+          <button onclick="assignRandomJudges(${cat.id}, 13)">13 მსაჯი</button>
+        </div>
+      </div>
+
+      <div id="conflictWarnings" style="margin-top: 16px; margin-bottom: 24px;"></div>
+      
+      <h3>მსაჯების სია</h3>
+      <p class="sub" style="margin-bottom:16px">მონიშნეთ მსაჯები, რომლებიც შეაფასებენ ამ კატეგორიას</p>
+      <div class="assignment-grid" id="assignmentGrid">
+        <!-- List of judges -->
+      </div>
+    `;
+    
+    checkConflicts(cat.id);
+    
+    const grid = document.getElementById('assignmentGrid');
+    // Only display officials with role 'judge'
+    const activeJudges = judges.filter(j => j.role === 'judge');
+    
+    if (activeJudges.length === 0) {
+      grid.innerHTML = '<div style="color:var(--muted)">მსაჯები არ არის ნაპოვნი. ჯერ დაამატეთ მსაჯები.</div>';
+      return;
+    }
+    
+    activeJudges.forEach(j => {
+      const isAssigned = assignedIds.includes(j.id);
+      const row = document.createElement('div');
+      row.className = 'switch-row' + (isAssigned ? ' active' : '');
+      row.innerHTML = `
+        <div class="switch-label">${j.judge_letter || '?'} - ${j.full_name} <span>(პინი: ${j.pin || '----'}${j.studio_name ? ' | 🏠 ' + j.studio_name : ''})</span></div>
+        <label class="switch">
+          <input type="checkbox" ${isAssigned ? 'checked' : ''} />
+          <span class="slider"></span>
+        </label>
+      `;
+      
+      const cb = row.querySelector('input');
+      cb.onchange = async () => {
+        cb.disabled = true;
+        try {
+          if (cb.checked) {
+            await fetch(`/api/categories/${cat.id}/judges/${j.id}`, { method: 'POST' });
+            row.classList.add('active');
+          } else {
+            await fetch(`/api/categories/${cat.id}/judges/${j.id}`, { method: 'DELETE' });
+            row.classList.remove('active');
+          }
+          await loadData();
+          checkConflicts(cat.id);
+        } catch(err) {
+          cb.checked = !cb.checked;
+          showToast('Error: ' + err.message);
+        } finally {
+          cb.disabled = false;
+        }
+      };
+      grid.appendChild(row);
+    });
+  }
+}
+
+async function toggleGridAssignment(catId, judgeId, cb) {
+  cb.disabled = true;
+  try {
+    if (cb.checked) {
+      await fetch(`/api/categories/${catId}/judges/${judgeId}`, { method: 'POST' });
+    } else {
+      await fetch(`/api/categories/${catId}/judges/${judgeId}`, { method: 'DELETE' });
+    }
+    // Silent reload data to keep variables updated without rebuilding the DOM
+    judges = await api('/api/judges/assignments');
+    const overview = await api('/api/scrutineer/overview');
+    categories = overview.categories || [];
+    
+    // Highlight cells dynamically
+    const cell = cb.closest('td');
+    if (cell) {
+      cell.style.background = cb.checked ? 'rgba(62,200,150,0.03)' : 'transparent';
+    }
+  } catch (err) {
+    cb.checked = !cb.checked;
+    showToast('Error: ' + err.message);
+  } finally {
+    cb.disabled = false;
+  }
+}
+
+function toggleFormRole(val) {
+  const section = document.getElementById('judgeCategoryAssignSection');
+  if (section) {
+    section.style.display = val === 'chairman' ? 'none' : 'block';
+  }
+}
+
+async function saveJudgeDetails(id) {
+  const name = document.getElementById('editName').value.trim();
+  const studio = document.getElementById('editStudio').value.trim();
+  const role = document.getElementById('editRole').value;
+  const pin = document.getElementById('editPin').value.trim();
+  
+  if (!name) return showToast('Name is required');
+  if (!pin || pin.length !== 4 || isNaN(pin)) return showToast('PIN code must be exactly 4 digits');
+  
+  try {
+    const res = await POST(`/api/judges/${id}/update`, { full_name: name, studio_name: studio, role, pin });
+    if (res.error) throw new Error(res.error);
+    showToast('Data saved successfully!');
+    await loadData();
+    renderDetails();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function addJudge() {
+  const input = document.getElementById('judgeNameInput');
+  const studioInput = document.getElementById('judgeStudioInput');
+  const btn = document.getElementById('judgeAddBtn');
+  const name = input.value.trim();
+  const studio = studioInput.value.trim();
+  if (!name) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const res = await POST('/api/judges', { full_name: name, studio_name: studio });
+    if (res.error) throw new Error(res.error);
+    input.value = '';
+    studioInput.value = '';
+    await loadData();
+    // Auto-select the newly added judge
+    const added = judges.find(j => j.full_name === name);
+    if (added) {
+      selectedId = added.id;
+      renderDetails();
+    }
+    input.focus();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '+ მსაჯის დამატება';
+  }
+}
+
+// Add a judge directly from the Excel matrix view, then re-render the grid
+async function addJudgeFromGrid() {
+  const input = document.getElementById('gridJudgeName');
+  const studioInput = document.getElementById('gridJudgeStudio');
+  const btn = document.getElementById('gridJudgeAddBtn');
+  if (!input) return;
+  const name = input.value.trim();
+  const studio = studioInput ? studioInput.value.trim() : '';
+  if (!name) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const res = await POST('/api/judges', { full_name: name, studio_name: studio });
+    if (res.error) throw new Error(res.error);
+    input.value = '';
+    if (studioInput) studioInput.value = '';
+    await loadData();
+    renderDetails(); // re-draw matrix so the new judge appears as a column
+    // restore focus to the (freshly rendered) name field
+    const again = document.getElementById('gridJudgeName');
+    if (again) again.focus();
+    showToast('მსაჯი დაემატა ✓');
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    const b = document.getElementById('gridJudgeAddBtn');
+    if (b) { b.disabled = false; b.textContent = '+ მსაჯის დამატება'; }
+  }
+}
+
+async function deleteJudge(id) {
+  if (!(await asyncConfirm('ნამდვილად გსურთ ამ მსაჯის წაშლა?'))) return;
+  try {
+    const res = await DELETE(`/api/judges/${id}`);
+    if (res.error) throw new Error(res.error);
+    selectedId = null;
+    await loadData();
+    renderDetails();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function assignRandomJudges(catId, count) {
+  // Filter for officials who are judges (role='judge')
+  const activeJudges = judges.filter(j => j.role === 'judge');
+  if (activeJudges.length === 0) return showToast('მსაჯები არ არის ნაპოვნი.');
+  
+  if (activeJudges.length < count) {
+    return showToast(`მხოლოდ ${activeJudges.length} მსაჯია ბაზაში. შეუძლებელია ${count} მსაჯის შერჩევა.`);
+  }
+
+  // Shuffle judges list randomly
+  const shuffled = [...activeJudges].sort(() => 0.5 - Math.random());
+  const selectedJudges = shuffled.slice(0, count).map(j => j.id);
+
+  try {
+    const res = await PUT(`/api/categories/${catId}/judges`, { judgeIds: selectedJudges });
+    if (res.error) throw new Error(res.error);
+    showToast(`წარმატებით შეირჩა და დაინიშნა ${count} მსაჯი!`);
+    await loadData();
+    renderDetails();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function checkConflicts(catId) {
+  const container = document.getElementById('conflictWarnings');
+  if (!container) return;
+  container.innerHTML = '';
+  try {
+    const { conflicts } = await api(`/api/categories/${catId}/judge-conflicts`);
+    if (conflicts && conflicts.length > 0) {
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--danger-bg); border:1px solid rgba(255,92,92,0.25); color:var(--danger); border-radius:12px; padding:16px; font-size:13px; display:flex; flex-direction:column; gap:10px;';
+      
+      let html = '<div style="font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px"><span>⚠️</span> ინტერესთა კონფლიქტი:</div>';
+      conflicts.forEach(c => {
+        html += `<div style="padding-left:12px">
+          <strong>მსაჯი ${c.judgeLetter || ''} (${c.judgeName})</strong> და წყვილები არიან ერთი სტუდიიდან (<u>${c.studio}</u>):
+          <ul style="margin:4px 0 0 0; padding-left:20px; line-height:1.6">`;
+        c.entries.forEach(e => {
+          html += `<li>წყვილი #${e.startNumber} (${e.couple}) - სტუდია: <u>${e.studio}</u></li>`;
+        });
+        html += '</ul></div>';
+      });
+      box.innerHTML = html;
+      container.appendChild(box);
+    }
+  } catch(e) {
+    console.error('Error checking conflicts:', e);
+  }
+}
+
+boot();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker registration failed', err));
+  });
+}
+</script>
+</body>
+</html>

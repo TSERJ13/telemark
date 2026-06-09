@@ -1,0 +1,6 @@
+{
+  "appId": "one.telemark.app",
+  "appName": "Telemark",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}

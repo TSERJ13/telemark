@@ -1,0 +1,22 @@
+{
+  "name": "Telemark Judging",
+  "short_name": "Telemark",
+  "description": "Telemark dancesport judging application",
+  "start_url": "/judge.html",
+  "display": "standalone",
+  "background_color": "#110e1a",
+  "theme_color": "#110e1a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo_telemark.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo_telemark_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: telemark
+    env: node
+    buildCommand: npm install --production
+    startCommand: node index.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /data/telemark.db
+      - key: BACKUP_DIR
+        value: /data/backups
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: DANCESPORT_URL
+        sync: false
+      - key: DANCESPORT_KEY
+        sync: false
+    disk:
+      name: telemark-data
+      mountPath: /data
+      sizeGB: 1

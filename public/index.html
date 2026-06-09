@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Telemark · Scrutineering System</title>
+  <link rel="icon" type="image/png" href="/logo_telemark.png" />
+  <link rel="apple-touch-icon" href="/logo_telemark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #09080d;
+      --surface: rgba(19, 17, 26, 0.7);
+      --surface2: rgba(28, 25, 38, 0.85);
+      --ink: #ece9f0;
+      --muted: #8d899a;
+      --line: rgba(255, 255, 255, 0.08);
+      --accent: #00e5ff;
+      --accent-glow: rgba(0, 229, 255, 0.15);
+      --danger: #ff5252;
+      --danger-bg: rgba(255, 82, 82, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+    }
+
+    .brand {
+      text-align: center;
+      animation: fadeInDown 0.8s ease-out;
+    }
+    .logo {
+      font-weight: 800;
+      font-size: 48px;
+      letter-spacing: -0.04em;
+      color: #fff;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .logo b { color: var(--accent); }
+    .tagline {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .login-box {
+      background: rgba(19, 17, 26, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0 0 24px 0;
+      text-align: center;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .input-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-left: 4px;
+    }
+    .input-group input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 16px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.05);
+      box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.1);
+    }
+
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      margin-top: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 229, 255, 0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .error-box {
+      background: var(--danger-bg);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .license-info {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .license-info a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .license-info a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .judge-link {
+      margin-top: 32px;
+      font-size: 14px;
+      color: var(--muted);
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+    .judge-link a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s;
+    }
+    .judge-link a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+  <script src="/ui.js"></script>
+<script src="/telemark-config.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <div class="logo">tele<b>mark</b></div>
+      <div class="tagline">Scrutineering Software</div>
+    </div>
+
+    <form class="login-box" id="loginForm">
+      <h1>Scrutineer Login</h1>
+      
+      <div class="error-box" id="errorBox"></div>
+
+      <div class="input-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="Email" />
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required placeholder="Password" />
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+
+      <div class="license-info">
+        Don't have a license? <a href="mailto:contact@telemark.one?subject=Requesting Scrutineer License">Request one</a>
+      </div>
+    </form>
+
+    <div class="judge-link">
+      <a href="/judge.html">Go to Adjudicator Tablet →</a>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('telemark_scrutineer_token')) {
+      window.location.href = '/scrutineer.html';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('submitBtn');
+      const err = document.getElementById('errorBox');
+      
+      btn.textContent = 'Verifying...';
+      btn.disabled = true;
+      err.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+        
+        // Success
+        localStorage.setItem('telemark_scrutineer_token', data.token);
+        localStorage.setItem('telemark_scrutineer_email', data.email);
+        
+        btn.textContent = 'Success!';
+        btn.style.background = 'var(--ok)';
+        btn.style.color = '#000';
+        
+        setTimeout(() => {
+          window.location.href = '/scrutineer.html';
+        }, 500);
+        
+      } catch (error) {
+        err.textContent = error.message;
+        err.style.display = 'block';
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+      }
+    });
+  </script>
+<a href="/settings.html" style="position:fixed;bottom:20px;right:20px;
+  width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
+  font-size:20px;text-decoration:none;color:var(--muted);transition:.2s;z-index:99"
+  title="Settings" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">⚙</a>
+</body>
+</html>

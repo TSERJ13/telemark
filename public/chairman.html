@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Telemark · Chairman</title>
+<link rel="icon" type="image/png" href="/logo_telemark.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#09080d; --surface:rgba(19,17,26,.75); --surface2:rgba(28,25,38,.9);
+  --ink:#ece9f0; --muted:#8d899a; --line:rgba(255,255,255,.08);
+  --accent:#00e5ff; --glow:rgba(0,229,255,.15);
+  --ok:#00e676; --ok-bg:rgba(0,230,118,.1);
+  --warn:#ffd600; --warn-bg:rgba(255,214,0,.1);
+  --danger:#ff5252; --danger-bg:rgba(255,82,82,.1);
+  --blue:#4da6ff; --blue-bg:rgba(77,166,255,.12);
+  --num:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Outfit',-apple-system,sans-serif;font-size:15px;min-height:100vh}
+
+/* ── header ── */
+header{display:flex;align-items:center;gap:14px;padding:10px 20px;
+       background:rgba(19, 17, 26, 0.8);backdrop-filter:blur(20px);
+       border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.logo {
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  cursor: pointer;
+}
+.logo b { color: var(--accent); }
+.sp{flex:1}
+.chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid;cursor:pointer;transition:.2s}
+.chip-ok{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.chip-danger{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
+.chip-muted{border-color:var(--line);color:var(--muted)}
+
+/* Top Nav Tab Buttons */
+.top-nav {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.nav-btn:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.03);
+}
+.nav-btn.active {
+  color: #fff;
+  background: var(--glow);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
+}
+
+/* ── main layout ── */
+main{padding:20px;max-width:1100px;margin:0 auto}
+
+/* ── cards ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+      padding:18px 20px;margin-bottom:14px;backdrop-filter:blur(10px)}
+.card-title{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.06em;
+            text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:block;width:3px;height:14px;
+                    background:var(--accent);border-radius:2px}
+
+/* ── section group ── */
+.section-header{font-size:18px;font-weight:700;margin:24px 0 12px;
+                display:flex;align-items:center;gap:10px}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;
+       background:var(--surface2);border:1px solid var(--line)}
+.badge-ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.badge-warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.badge-accent{background:var(--glow);border-color:var(--accent);color:var(--accent)}
+
+/* ── category row ── */
+.cat-row{display:flex;align-items:center;gap:10px;padding:12px 14px;
+         border-bottom:1px solid var(--line);transition:.15s;flex-wrap:wrap}
+.cat-row:last-child{border-bottom:none}
+.cat-row:hover{background:rgba(255,255,255,.02)}
+.cat-row.confirmed{border-left:3px solid var(--ok)}
+.bib{width:38px;height:38px;border-radius:8px;background:rgba(240,106,55,.12);
+     border:1px solid rgba(240,106,55,.25);display:flex;align-items:center;justify-content:center;
+     font-family:var(--num);font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0}
+.cat-name{font-weight:600;font-size:14px;flex:1;min-width:160px}
+.cat-meta{font-size:12px;color:var(--muted)}
+.cat-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ── select ── */
+select{background:var(--surface2);border:1px solid var(--line);color:var(--ink);
+       padding:7px 10px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent)}
+
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;
+     font-weight:600;font-size:13px;cursor:pointer;border:none;transition:.2s;font-family:inherit}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:#d95a2b}
+.btn-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.btn-ok:hover:not(:disabled){background:rgba(62,200,150,.2)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.btn-danger:hover:not(:disabled){background:rgba(255,82,82,.2)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-ghost:hover:not(:disabled){color:var(--ink);border-color:rgba(255,255,255,.2)}
+.btn-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)}
+
+/* ── live monitor ── */
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.judge-cell{padding:10px;border-radius:10px;border:1px solid var(--line);
+            background:var(--surface2);text-align:center;transition:.3s}
+.judge-cell.outlier{border-color:var(--danger);background:var(--danger-bg);animation:pulse 2s infinite}
+.judge-letter{font-size:24px;font-weight:800;font-family:var(--num);color:var(--accent)}
+.judge-name{font-size:11px;color:var(--muted);margin-top:2px}
+.judge-dev{font-size:12px;font-weight:700;color:var(--danger);margin-top:4px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,82,82,.3)}50%{box-shadow:0 0 0 6px rgba(255,82,82,0)}}
+
+/* ── live marks table ── */
+.marks-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.marks-table th{background:rgba(255,255,255,.05);padding:6px 10px;text-align:left;
+                font-size:11px;color:var(--muted);letter-spacing:.05em}
+.marks-table td{padding:7px 10px;border-bottom:1px solid var(--line);
+                font-family:var(--num);text-align:center}
+.marks-table td.name{text-align:left;font-family:inherit;font-size:12px}
+.mark-hi{color:var(--ok);font-weight:700}
+.mark-lo{color:var(--danger);font-weight:700}
+
+/* ── auth overlay ── */
+#auth-overlay{position:fixed;inset:0;background:rgba(9,8,13,.95);
+              display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(8px)}
+.auth-card{background:var(--surface2);border:1px solid var(--line);border-radius:20px;
+           padding:36px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.auth-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+input[type=password],input[type=text]{width:100%;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);color:var(--ink);padding:12px 14px;border-radius:10px;
+  font-size:15px;font-family:var(--num);letter-spacing:.15em;margin-bottom:12px}
+input:focus{outline:none;border-color:var(--accent)}
+.err{color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px}
+
+/* ── toast ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);
+       border:1px solid var(--line);border-radius:12px;padding:12px 18px;
+       font-size:13px;font-weight:600;transform:translateY(80px);opacity:0;
+       transition:.3s;z-index:9999;max-width:320px}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.err{border-color:var(--danger);color:var(--danger)}
+
+.spin{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--muted);padding:32px;font-size:14px}
+
+/* ── progress bar ── */
+.prog-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:6px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:var(--ok);transition:.4s}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:24px;width:460px;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:14px}
+</style>
+<script src="/telemark-config.js"></script>
+</head>
+<body>
+
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-title" style="display:flex;align-items:center;gap:10px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      Chairman Portal
+    </div>
+    <div class="auth-sub" id="auth-sub">Enter your PIN to access the chairman portal.</div>
+    <input type="password" id="pin-input" placeholder="PIN" maxlength="8" autocomplete="current-password"/>
+    <div class="err" id="auth-err"></div>
+    <button class="btn btn-primary" style="width:100%" id="auth-btn">Enter →</button>
+    <div style="margin-top:16px;display:flex;justify-content:center">
+      <a href="/" style="color:var(--muted);font-size:13px">← Back to main</a>
+    </div>
+  </div>
+</div>
+
+<header>
+  <span class="logo" onclick="location.reload()">tele<b>mark</b></span>
+  <span class="sp"></span>
+  <div class="top-nav" id="tabs">
+    <button class="nav-btn active" data-tab="categories">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Categories
+    </button>
+    <button class="nav-btn" data-tab="judges">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Judges
+    </button>
+    <button class="nav-btn" data-tab="live">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Live
+    </button>
+    <button class="nav-btn" data-tab="print">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+    <button class="nav-btn" data-tab="settings">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </div>
+  <span class="sp"></span>
+  <span id="comp-name" style="font-size:13px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:12px;font-weight:700"></span>
+  <span id="lock-chip" class="chip chip-muted" onclick="toggleLock()" title="Toggle lock" style="margin-right:12px"></span>
+  <button class="btn btn-ghost" style="font-size:12px" onclick="logout()">Logout</button>
+</header>
+
+<main>
+  <div id="tab-categories"></div>
+  <div id="tab-judges" style="display:none"></div>
+  <div id="tab-live" style="display:none"></div>
+  <div id="tab-print" style="display:none"></div>
+  <div id="tab-settings" style="display:none"></div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+const BASE = '';
+let TOKEN = localStorage.getItem('chairman_token') || '';
+let liveInterval = null;
+let currentTab = 'categories';
+
+// ── API helpers ────────────────────────────────────────────────────────
+const api = (url) => fetch(BASE+url, {headers:{'x-chairman-token':TOKEN}}).then(async r=>{
+  if (r.status===401){TOKEN='';localStorage.removeItem('chairman_token');showAuth();throw new Error('Session expired');}
+  const d=await r.json(); if(!r.ok) throw new Error(d.error||r.statusText); return d;
+});
+const post = (url,body={}) => fetch(BASE+url,{method:'POST',headers:{'Content-Type':'application/json','x-chairman-token':TOKEN},body:JSON.stringify(body)}).then(async r=>{
+  if(r.status===401){TOKEN='';localStorage.removeItem('chairman_token');showAuth();throw new Error('Session expired');}
+  const d=await r.json(); if(!r.ok) throw new Error(d.error||r.statusText); return d;
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg, isErr=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(isErr?' err':'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.className='',3200);
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────
+function showAuth(){ document.getElementById('auth-overlay').style.display='flex'; }
+function hideAuth(){ document.getElementById('auth-overlay').style.display='none'; }
+
+async function doAuth(){
+  const pin=document.getElementById('pin-input').value.trim();
+  const btn=document.getElementById('auth-btn');
+  const sub=document.getElementById('auth-sub');
+  const err=document.getElementById('auth-err');
+  err.textContent=''; btn.disabled=true; btn.textContent='…';
+  try{
+    // Check if PIN is set
+    const status=await fetch('/api/chairman/status').then(r=>r.json());
+    if(!status.pinSet){
+      // First time setup
+      if(pin.length<4){err.textContent='PIN must be at least 4 digits.'; return;}
+      await fetch('/api/chairman/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(r=>r.json());
+      sub.textContent='PIN set successfully. Logging in…';
+    }
+    const res=await fetch('/api/chairman/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(async r=>{
+      const d=await r.json(); if(!r.ok) throw new Error(d.error); return d;
+    });
+    TOKEN=res.token; localStorage.setItem('chairman_token',TOKEN);
+    hideAuth(); boot();
+  }catch(e){ err.textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent='Enter →'; }
+}
+
+document.getElementById('auth-btn').onclick=doAuth;
+document.getElementById('pin-input').onkeydown=e=>{ if(e.key==='Enter') doAuth(); };
+
+// ── Boot ──────────────────────────────────────────────────────────────
+async function boot(){
+  if(!TOKEN){ showAuth(); return; }
+  try{
+    const [status,comp] = await Promise.all([
+      fetch('/api/chairman/status',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json()),
+      fetch('/api/competition',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json()),
+    ]);
+    if(!status) return;
+    // Update header
+    const compName = document.getElementById('comp-name');
+    compName.textContent = comp ? comp.name : 'No competition';
+    const lockChip = document.getElementById('lock-chip');
+    const lockSvg = status.locked ? 
+      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Locked` : 
+      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlocked`;
+    lockChip.innerHTML = lockSvg;
+    lockChip.className = 'chip ' + (status.locked ? 'chip-danger' : 'chip-ok');
+    renderTab(currentTab);
+  }catch(e){ if(e.message.includes('expired')) showAuth(); }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('main > div').forEach(d=>d.style.display='none');
+    currentTab=btn.dataset.tab;
+    document.getElementById('tab-'+currentTab).style.display='';
+    if(currentTab==='live') startLive(); else stopLive();
+    renderTab(currentTab);
+  };
+});
+
+function renderTab(tab){
+  if(tab==='categories') renderCategories();
+  else if(tab==='judges') renderJudges();
+  else if(tab==='live') renderLive();
+  else if(tab==='print') renderPrint();
+  else if(tab==='settings') renderSettings();
+}
+
+// ── CATEGORIES TAB ─────────────────────────────────────────────────────
+async function renderCategories(){
+  const el=document.getElementById('tab-categories');
+  el.innerHTML='<div class="empty"><span class="spin">◌</span> Loading…</div>';
+  try{
+    const cats = await api('/api/chairman/categories');
+    // Group by session
+    const sessions={};
+    for(const c of cats){
+      const s=c.session_number??1;
+      (sessions[s]||=[]).push(c);
+    }
+    let html='';
+    for(const [sess, list] of Object.entries(sessions)){
+      const confirmed=list.filter(c=>c.chairman_confirmed).length;
+      const total=list.length;
+      const allDone=confirmed===total;
+      const sessTime=list[0]?.session_time||'';
+      html+=`<div class="section-header">
+        Session ${sess} ${sessTime?`<span style="font-size:14px;color:var(--muted)">${esc(sessTime)}</span>`:''}
+        <span class="badge ${allDone?'badge-ok':'badge-warn'}">${confirmed}/${total} confirmed</span>
+        ${allDone?`<button class="btn btn-ok" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center" onclick="generateNumbers(${sess})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>Generate Numbers</button>`:''}
+      </div>
+      <div class="card" style="padding:0">`;
+      for(const cat of list){
+        html+=renderCatRow(cat);
+      }
+      html+=`</div>`;
+    }
+    if(!html) html='<div class="empty">No categories loaded. Pull a competition first.</div>';
+    el.innerHTML=html;
+  }catch(e){ el.innerHTML=`<div class="empty" style="color:var(--danger)">${esc(e.message)}</div>`; }
+}
+
+function renderCatRow(cat){
+  const fc=cat.finals_count||6;
+  const currentKind = cat.first_round_kind || (cat.starting_round_options && cat.starting_round_options[cat.starting_round_options.length - 1]?.kind || 'final');
+  
+  let roundSelectHtml = '';
+  if (cat.starting_round_options && cat.starting_round_options.length > 1) {
+    roundSelectHtml = `
+      <label style="font-size:12px;color:var(--muted);margin-left:12px">Round 1</label>
+      <select id="frk-${cat.id}" onchange="toggleFinalsDropdown(${cat.id}, ${cat.entry_count})" style="background:var(--surface-active);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none">
+        ${cat.starting_round_options.map(o => `<option value="${o.kind}" ${currentKind === o.kind ? 'selected' : ''}>${o.label}</option>`).join('')}
+      </select>
+    `;
+  } else {
+    const single = cat.starting_round_options ? cat.starting_round_options[0] : null;
+    roundSelectHtml = `
+      <input type="hidden" id="frk-${cat.id}" value="${single ? single.kind : 'final'}" />
+    `;
+  }
+
+  const showFinalsSelect = (currentKind !== 'final' && cat.entry_count > 8);
+
+  return `<div class="cat-row ${cat.chairman_confirmed?'confirmed':''}" id="catrow-${cat.id}">
+    <div class="bib">${cat.entry_count}</div>
+    <div>
+      <div class="cat-name">${esc(cat.name)}</div>
+      <div class="cat-meta">${cat.suggested_first_round} · ${cat.entry_count} couples · Finals: ${fc}</div>
+    </div>
+    <div class="sp"></div>
+    <div class="cat-actions">
+      ${roundSelectHtml}
+      <span id="fc-container-${cat.id}" style="display: ${showFinalsSelect ? 'inline-flex' : 'none'}; align-items: center; gap: 8px;">
+        <label style="font-size:12px;color:var(--muted);margin-left:12px">Finals</label>
+        <select id="fc-${cat.id}" style="background:var(--surface-active);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none">
+          <option value="6" ${fc===6?'selected':''}>6 (Final 1–6)</option>
+          <option value="8" ${fc===8?'selected':''}>8 (Final 1–8)</option>
+        </select>
+      </span>
+      ${cat.chairman_confirmed
+        ? `<span class="badge badge-ok">✓ Confirmed</span>
+           <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="unconfirmCat(${cat.id})">Undo</button>`
+        : `<button class="btn btn-ok" onclick="confirmCat(${cat.id})">✓ Confirm</button>`
+      }
+    </div>
+  </div>`;
+}
+
+function toggleFinalsDropdown(catId, entryCount) {
+  const frkEl = document.getElementById('frk-' + catId);
+  const container = document.getElementById('fc-container-' + catId);
+  if (!container) return;
+  const val = frkEl ? frkEl.value : 'final';
+  if (val === 'final' || entryCount <= 8) {
+    container.style.display = 'none';
+  } else {
+    container.style.display = 'inline-flex';
+  }
+}
+
+async function confirmCat(catId){
+  const fc=+document.getElementById('fc-'+catId).value;
+  const frkEl=document.getElementById('frk-'+catId);
+  const frk=frkEl ? frkEl.value : null;
+  try{
+    await post(`/api/chairman/category/${catId}/confirm-structure`,{finals_count:fc, first_round_kind:frk});
+    toast('Category confirmed ✓');
+    renderCategories();
+  }catch(e){ toast(e.message,true); }
+}
+async function unconfirmCat(catId){
+  try{ await post(`/api/chairman/category/${catId}/unconfirm`); toast('Unconfirmed'); renderCategories(); }
+  catch(e){ toast(e.message,true); }
+}
+async function generateNumbers(session){
+  if(!confirm(`Generate start numbers for Session ${session}? This cannot be undone.`)) return;
+  try{
+    const r=await post('/api/scrutineer/numbering',{session_number:session});
+    toast(`Numbers generated: ${r.startFrom}–${r.lastNumber}`);
+  }catch(e){ toast(e.message,true); }
+}
+
+// ── JUDGES TAB ─────────────────────────────────────────────────────────
+async function renderJudges(){
+  const el=document.getElementById('tab-judges');
+  el.innerHTML='<div class="empty"><span class="spin">◌</span> Loading…</div>';
+  try{
+    const [judges, overview] = await Promise.all([
+      api('/api/judges/assignments'),
+      api('/api/scrutineer/overview')
+    ]);
+    const categories = overview.categories || [];
+    const activeJudges = judges.filter(j => j.role === 'judge');
+
+    const getCatColor = (name) => {
+      const n = name.toLowerCase();
+      if (n.includes('juvenile') || n.includes('ბავშვ')) return { bg: 'rgba(76, 175, 80, 0.15)', border: '#4caf50', text: '#a5d6a7' };
+      if (n.includes('junior') || n.includes('იუნიორ')) return { bg: 'rgba(255, 235, 59, 0.12)', border: '#fbc02d', text: '#ffe082' };
+      if (n.includes('youth') || n.includes('ახალგაზრდ')) return { bg: 'rgba(255, 152, 0, 0.12)', border: '#f57c00', text: '#ffcc80' };
+      if (n.includes('under 21') || n.includes('21-მდე') || n.includes('u21') || n.includes('u-21')) return { bg: 'rgba(244, 67, 54, 0.12)', border: '#e53935', text: '#ef9a9a' };
+      if (n.includes('adult') || n.includes('დიდებ') || n.includes('seniors') || n.includes('senior') || n.includes('სენიორ')) return { bg: 'rgba(33, 150, 243, 0.15)', border: '#1e88e5', text: '#90caf9' };
+      if (n.includes('pro-am') || n.includes('proam') || n.includes('პრო-ამ')) return { bg: 'rgba(156, 39, 176, 0.12)', border: '#8e24aa', text: '#ce93d8' };
+      return { bg: 'rgba(255, 255, 255, 0.03)', border: 'var(--line)', text: 'var(--ink)' };
+    };
+
+    let headersHtml = activeJudges.map(j => `
+      <th style="padding:12px 8px; border:1px solid var(--line); text-align:center; min-width:80px;" title="${esc(j.full_name)}">
+        <div style="font-weight:800; color:var(--accent); font-family:var(--num); font-size:15px; margin-bottom:2px;">${esc(j.judge_letter || '?')}</div>
+        <div style="font-size:11px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px;">${esc(j.full_name.split(' ')[0])}</div>
+        <div style="font-size:10px; color:var(--warn); font-family:var(--num); font-weight:700; margin-top:2px; background:var(--warn-bg); border-radius:4px; padding:1px 4px; display:inline-block;">${esc(j.pin || '----')}</div>
+      </th>
+    `).join('');
+
+    let rowsHtml = categories.map(c => {
+      const assignedIds = judges.filter(j => j.categories.includes(c.id)).map(j => j.id);
+      const color = getCatColor(c.name);
+      
+      let cellsHtml = activeJudges.map(j => {
+        const isAssigned = assignedIds.includes(j.id);
+        return `
+          <td style="text-align:center; padding:8px; border:1px solid var(--line); background:${isAssigned ? 'rgba(0, 229, 255, 0.05)' : 'transparent'}">
+            <input type="checkbox" ${isAssigned ? 'checked' : ''} 
+              onchange="toggleChairmanGridAssignment(${c.id}, ${j.id}, this)" 
+              style="width:20px; height:20px; cursor:pointer; accent-color:var(--accent);" />
+          </td>
+        `;
+      }).join('');
+
+      return `
+        <tr style="border-bottom:1px solid var(--line); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+          <td style="padding:12px 16px; text-align:left; font-weight:600; border:1px solid var(--line); position:sticky; left:0; background:${color.bg}; border-left:4px solid ${color.border}; z-index:5; box-shadow: 2px 0 5px rgba(0,0,0,0.3);">
+            <div style="font-size:13.5px; color:${color.text}; font-weight:700">${esc(c.name)}</div>
+            <div style="font-size:11px; color:var(--muted); font-weight:500; margin-top:2px;">${c.entry_count} წყვილი / couples</div>
+          </td>
+          ${cellsHtml}
+        </tr>
+      `;
+    }).join('');
+
+    let html = `
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">მსაჯების განაწილების მატრიცა / Judging Allocation Matrix</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0 4px;">
+          <input type="text" id="chJudgeName" placeholder="მსაჯის სახელი (ლათინური)"
+            onkeydown="if(event.key==='Enter')addJudgeChairman()"
+            style="flex:1; min-width:200px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
+          <input type="text" id="chJudgeStudio" placeholder="Studio (არასავალდებულო)"
+            onkeydown="if(event.key==='Enter')addJudgeChairman()"
+            style="flex:1; min-width:180px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
+          <button class="btn" id="chJudgeAddBtn" onclick="addJudgeChairman()" style="padding:9px 16px; font-weight:700; white-space:nowrap; background:var(--accent); color:#06222a; border:none; border-radius:10px; cursor:pointer;">+ მსაჯის დამატება</button>
+        </div>
+        <div style="width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:rgba(0,0,0,0.2); margin-top:8px;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="background:var(--surface2);">
+                <th style="text-align:left; padding:16px; border:1px solid var(--line); position:sticky; left:0; background:#1c1926; z-index:6; min-width:200px; box-shadow: 2px 0 5px rgba(0,0,0,0.3);">კატეგორია / Category</th>
+                ${headersHtml}
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml || `<tr><td colspan="100" class="muted" style="text-align:center; padding:32px;">მსაჯები ან კატეგორიები არ არის ნაპოვნი</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/judges.html" target="_blank" class="btn btn-ghost" style="border-color:var(--accent);color:var(--accent)">⚖ მართვა / Manage Judges</a>
+        <a href="/print/judges-summary" target="_blank" class="btn btn-ghost">📋 ბეჭდვა ერთად / Print Summary</a>
+        <a href="/print/judges-slips" target="_blank" class="btn btn-ghost">✂️ ბარათები ცალ-ცალკე / Print Slips</a>
+        <button class="btn btn-ghost" onclick="openPinReset()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Reset PIN</button>
+        <a href="/print/pins" target="_blank" class="btn btn-ghost"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print All PINs</a>
+      </div>
+    `;
+    el.innerHTML = html;
+  }catch(e){ el.innerHTML=`<div class="empty" style="color:var(--danger)">${esc(e.message)}</div>`; }
+}
+
+async function toggleChairmanGridAssignment(catId, judgeId, cb) {
+  cb.disabled = true;
+  try {
+    if (cb.checked) {
+      await fetch(`/api/categories/${catId}/judges/${judgeId}`, { method: 'POST', headers:{'x-chairman-token':TOKEN} });
+    } else {
+      await fetch(`/api/categories/${catId}/judges/${judgeId}`, { method: 'DELETE', headers:{'x-chairman-token':TOKEN} });
+    }
+    // Highlight cells dynamically
+    const cell = cb.closest('td');
+    if (cell) {
+      cell.style.background = cb.checked ? 'rgba(0, 229, 255, 0.05)' : 'transparent';
+    }
+    toast('განაწილება განახლდა / Assignment updated');
+  } catch (err) {
+    cb.checked = !cb.checked;
+    toast('Error: ' + err.message, true);
+  } finally {
+    cb.disabled = false;
+  }
+}
+
+// Add a judge directly from the chairman allocation matrix
+async function addJudgeChairman() {
+  const input = document.getElementById('chJudgeName');
+  const studioInput = document.getElementById('chJudgeStudio');
+  const btn = document.getElementById('chJudgeAddBtn');
+  if (!input) return;
+  const name = input.value.trim();
+  const studio = studioInput ? studioInput.value.trim() : '';
+  if (!name) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    await post('/api/judges', { full_name: name, studio_name: studio });
+    toast('მსაჯი დაემატა ✓');
+    await renderJudges(); // re-draw matrix with the new judge column
+  } catch (err) {
+    toast('Error: ' + err.message, true);
+    const b = document.getElementById('chJudgeAddBtn');
+    if (b) { b.disabled = false; b.textContent = '+ მსაჯის დამატება'; }
+  }
+}
+
+function openPinReset(){
+  if(!confirm('Reset the chairman PIN? You will need to set a new one at next login.')) return;
+  fetch('/api/chairman/reset-pin',{method:'POST',headers:{'x-chairman-token':TOKEN,'Content-Type':'application/json'}})
+    .then(r=>r.json()).then(d=>{ if(d.ok){ toast('PIN reset. Logging out.'); setTimeout(()=>{logout();},1500); } else toast(d.error,true); })
+    .catch(e=>toast(e.message,true));
+}
+
+// ── LIVE TAB ────────────────────────────────────────────────────────────
+function startLive(){ if(!liveInterval) liveInterval=setInterval(()=>renderLive(),3000); }
+function stopLive(){ clearInterval(liveInterval); liveInterval=null; }
+
+async function renderLive(){
+  const el=document.getElementById('tab-live');
+  if(el.querySelector('.live-empty')){ el.innerHTML='<div class="empty live-empty"><span class="spin">◌</span> Waiting for active rounds…</div>'; }
+  try{
+    const dances=await api('/api/chairman/active-dances');
+    if(!dances.length){
+      el.innerHTML='<div class="empty live-empty" style="margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:12px">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>' +
+        '<div>No active rounds right now.</div>' +
+        '<small style="color:var(--muted)">Updates every 3 seconds</small></div>';
+      return;
+    }
+    let html='<div class="section-header">Live Monitoring <span class="badge badge-accent">● LIVE</span></div>';
+    for(const d of dances){
+      html+=`<div class="card" id="live-${d.round_dance_id}">
+        <div class="card-title">${esc(d.category_name)} · ${esc(d.dance_code)}</div>
+        <div class="empty" style="padding:16px"><span class="spin">◌</span> Loading marks…</div>
+      </div>`;
+    }
+    el.innerHTML=html;
+    // Load details for each dance
+    for(const d of dances){
+      try{
+        const data=await api('/api/chairman/live/'+d.round_dance_id);
+        const card=document.getElementById('live-'+d.round_dance_id);
+        if(card) card.innerHTML=buildLiveCard(data);
+      }catch(_){}
+    }
+  }catch(e){ if(!el.querySelector('.live-empty')) el.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+
+function buildLiveCard(data){
+  const hasOutliers=data.outliers.length>0;
+  let html=`<div class="card-title">${esc(data.categoryName)} · ${esc(data.dance)} · ${esc(data.kind)}
+    ${hasOutliers?`<span class="badge" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger);display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>${data.outliers.length} outlier${data.outliers.length>1?'s':''}</span>`:''}
+  </div>`;
+
+  // Judge summary row
+  html+='<div class="live-grid">';
+  for(const j of data.judges){
+    const confirmed=j.marks.every(m=>m.confirmed);
+    const pct=j.marks.length?Math.round(j.marks.filter(m=>m.place!=null||m.crossMark!=null).length/j.marks.length*100):0;
+    html+=`<div class="judge-cell ${j.isOutlier?'outlier':''}">
+      <div class="judge-letter">${esc(j.letter)}</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="judge-dev">${j.isOutlier?'Outlier':confirmed?'✓ Done':pct+'%'}</div>
+    </div>`;
+  }
+  html+='</div>';
+
+  // Mark detail table
+  if(data.judges.length && data.judges[0].marks.length){
+    const judgeLetters=data.judges.map(j=>j.letter);
+    html+=`<div style="overflow-x:auto;margin-top:12px">
+    <table class="marks-table">
+      <thead><tr>
+        <th class="name">No.</th><th class="name">Couple</th>
+        ${judgeLetters.map(l=>`<th>${esc(l)}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+    // Collect all entries
+    const entries=data.judges[0]?.marks||[];
+    for(const m of entries){
+      const places=data.judges.map(j=>{
+        const jm=j.marks.find(x=>x.entryId===m.entryId);
+        return jm?.place??null;
+      });
+      const validPlaces=places.filter(p=>p!=null);
+      const avg=validPlaces.length?validPlaces.reduce((a,b)=>a+b,0)/validPlaces.length:null;
+      const cells=places.map(p=>{
+        if(p==null) return `<td>·</td>`;
+        const dev=avg!=null?Math.abs(p-avg):0;
+        const cls=dev>=2?'mark-lo':p<=(avg-1.5)?'mark-hi':'';
+        return `<td class="${cls}">${p}</td>`;
+      }).join('');
+      html+=`<tr ${m.disqualified?'class="dq"':''}>
+        <td class="name">${m.startNumber}</td>
+        <td class="name">${esc(m.name)}</td>
+        ${cells}
+      </tr>`;
+    }
+    html+=`</tbody></table></div>`;
+  }
+  return html;
+}
+
+// ── PRINT TAB ──────────────────────────────────────────────────────────
+async function renderPrint(){
+  const el=document.getElementById('tab-print');
+  el.innerHTML='<div class="empty"><span class="spin">◌</span> Loading…</div>';
+  try{
+    const comp=await api('/api/competition');
+    if(!comp){ el.innerHTML='<div class="empty">No competition loaded.</div>'; return; }
+    const overview=await api('/api/scrutineer/overview');
+    const cats=overview.categories||[];
+    const sessions=[...new Set(cats.map(c=>c.session_number??1))].sort();
+
+    let html=`<div class="section-header">Print Documents</div>
+    <div class="card">
+      <div class="card-title">General</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a href="/print/officials" target="_blank" class="btn btn-ghost">Officials List</a>
+        <a href="/print/missing" target="_blank" class="btn btn-ghost">Missing / Excused</a>
+        <a href="/print/judges-summary" target="_blank" class="btn btn-ghost">📋 Adjudicators Summary (ერთად)</a>
+        <a href="/print/judges-slips" target="_blank" class="btn btn-ghost">✂️ Adjudicators Slips (ცალ-ცალკე)</a>
+        ${sessions.map(s=>`<a href="/print/pins/${s}" target="_blank" class="btn btn-blue" style="display:inline-flex;align-items:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Judge PINs · Session ${s}</a>`).join('')}
+        ${sessions.map(s=>`<a href="/print/judges-session/${s}" target="_blank" class="btn btn-ghost" style="display:inline-flex;align-items:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Judges · Session ${s}</a>`).join('')}
+      </div>
+    </div>`;
+
+    for(const s of sessions){
+      const sessionCats=cats.filter(c=>(c.session_number??1)===s);
+      html+=`<div class="section-header">Session ${s}</div>`;
+      for(const cat of sessionCats){
+        html+=`<div class="card" style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div class="bib">${cat.entry_count}</div>
+            <div><div style="font-weight:700">${esc(cat.name)}</div>
+            <div style="font-size:12px;color:var(--muted)">${cat.rounds?.length||0} rounds</div></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <a href="/print/couples/${cat.id}" target="_blank" class="btn btn-ghost" style="font-size:12px">Start List</a>
+            <a href="/print/all-rounds/${cat.id}" target="_blank" class="btn btn-ghost" style="font-size:12px">All Rounds</a>`;
+        for(const r of cat.rounds||[]){
+          html+=`
+            <a href="/print/draw/${r.id}" target="_blank" class="btn btn-ghost" style="font-size:12px">R${r.ordinal} Draw</a>
+            <a href="/print/results-full/${r.id}" target="_blank" class="btn btn-ghost" style="font-size:12px">R${r.ordinal} Results</a>
+            <a href="/print/checksum/${r.id}" target="_blank" class="btn btn-ghost" style="font-size:12px">R${r.ordinal} Checksum</a>`;
+        }
+        html+=`</div></div>`;
+      }
+    }
+    el.innerHTML=html;
+  }catch(e){ el.innerHTML=`<div class="empty" style="color:var(--danger)">${esc(e.message)}</div>`; }
+}
+
+// ── SETTINGS TAB ───────────────────────────────────────────────────────
+async function renderSettings(){
+  const el=document.getElementById('tab-settings');
+  try{
+    const status=await fetch('/api/chairman/status',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json());
+    el.innerHTML=`
+    <div class="section-header">Settings</div>
+    <div class="card" style="max-width:420px">
+      <div class="card-title">Competition Lock</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        When locked, no new marks can be submitted by judges.
+      </p>
+      <button class="btn ${status.locked?'btn-ok':'btn-danger'}" onclick="toggleLock()" style="display:inline-flex;align-items:center">
+        ${status.locked ? 
+          `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Unlock Competition` : 
+          `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Lock Competition`
+        }
+      </button>
+    </div>
+    <div class="card" style="max-width:420px">
+      <div class="card-title">Chairman PIN</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Change your PIN:</p>
+      <input type="password" id="old-pin" placeholder="Current PIN" style="margin-bottom:8px"/>
+      <input type="password" id="new-pin" placeholder="New PIN (min 4 digits)" style="margin-bottom:8px"/>
+      <button class="btn btn-primary" onclick="changePin()">Change PIN</button>
+    </div>`;
+  }catch(e){ el.innerHTML=`<div class="empty" style="color:var(--danger)">${esc(e.message)}</div>`; }
+}
+
+async function toggleLock(){
+  try{
+    const status=await fetch('/api/chairman/status',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json());
+    const url=status.locked?'/api/chairman/unlock':'/api/chairman/lock';
+    await post(url);
+    toast(status.locked?'Competition unlocked':'Competition locked');
+    boot();
+  }catch(e){ toast(e.message,true); }
+}
+
+async function changePin(){
+  const oldPin=document.getElementById('old-pin')?.value;
+  const newPin=document.getElementById('new-pin')?.value;
+  if(!oldPin||!newPin){toast('Enter both PINs',true);return;}
+  try{
+    await post('/api/chairman/change-pin',{currentPin:oldPin,newPin});
+    toast('PIN changed successfully ✓');
+    document.getElementById('old-pin').value='';
+    document.getElementById('new-pin').value='';
+  }catch(e){ toast(e.message,true); }
+}
+
+function logout(){
+  TOKEN=''; localStorage.removeItem('chairman_token'); location.reload();
+}
+
+function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ── Init ───────────────────────────────────────────────────────────────
+(async()=>{
+  const status=await fetch('/api/chairman/status').then(r=>r.json()).catch(()=>null);
+  if(status && !status.pinSet){
+    document.getElementById('auth-sub').textContent='First time setup: choose a chairman PIN (min 4 digits).';
+    document.getElementById('auth-btn').textContent='Set PIN & Enter →';
+  }
+  if(TOKEN) boot();
+})();
+</script>
+</body>
+</html>
