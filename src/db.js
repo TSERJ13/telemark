@@ -82,6 +82,7 @@ function roundLabel(kind) {
     final: 'Final', semifinal: '1/2 Final', quarterfinal: '1/4 Final',
     r8: '1/8 Final', r16: '1/16 Final', r32: '1/32 Final',
     r64: '1/64 Final', r128: '1/128 Final', redance: 'Redance',
+    grading: 'Grading',
   };
   return MAP[kind] || kind;
 }
@@ -173,6 +174,14 @@ function openDb(file = ':memory:', opts = {}) {
         db.exec('ALTER TABLE entry ADD COLUMN disqualified INTEGER NOT NULL DEFAULT 0;');
       if (!entryCols.includes('dq_reason'))
         db.exec('ALTER TABLE entry ADD COLUMN dq_reason TEXT;');
+      if (!entryCols.includes('grade'))
+        db.exec('ALTER TABLE entry ADD COLUMN grade TEXT;');
+      if (!entryCols.includes('grade_average'))
+        db.exec('ALTER TABLE entry ADD COLUMN grade_average REAL;');
+
+      // mark: grading score (Festival/Grading mode)
+      if (markCols.length && !markCols.includes('grade_score'))
+        db.exec('ALTER TABLE mark ADD COLUMN grade_score REAL;');
 
       // category_judge
       if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='category_judge'").get())

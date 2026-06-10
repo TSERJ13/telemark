@@ -1022,9 +1022,13 @@ function createServer(db, opts = {}) {
 
     const finalDances = dancesForCategory(cat);
     const finalsCount = cat.finals_count || 6;
-    
+
     let kind, recallCount;
-    if (cat.first_round_kind) {
+    if (cat.judging_system === 'grading') {
+      // Festival/Grading: one round, everyone dances once, no recall/elimination.
+      kind = 'grading';
+      recallCount = null;
+    } else if (cat.first_round_kind) {
       kind = cat.first_round_kind;
       const step = ROUND_LADDER.find(s => s.kind === kind);
       recallCount = step ? step.recallTo : null;
@@ -1035,7 +1039,7 @@ function createServer(db, opts = {}) {
       kind = resKind.kind;
       recallCount = resKind.recallCount;
     }
-    const drawMode = kind === 'final' ? 'fixed_heats' : 'random_all_same';
+    const drawMode = (kind === 'final' || kind === 'grading') ? 'fixed_heats' : 'random_all_same';
 
     const round = createRound(db, catId, {
       ordinal: 1, kind, dances: finalDances, recallCount, drawMode,
@@ -1126,6 +1130,15 @@ function createServer(db, opts = {}) {
   app.get('/api/scrutineer/round/:rid/results', wrap((req, res) => {
     const round = db.prepare('SELECT * FROM round WHERE id=?').get(+req.params.rid);
     if (!round) return res.status(404).json({ error: 'Round not found' });
+    if (round.kind === 'grading') {
+      const rows = db.prepare(
+        `SELECT e.start_number AS number, e.name1, e.name2, e.grade, e.grade_average, e.disqualified
+         FROM entry e
+         WHERE e.category_id=? AND e.grade IS NOT NULL
+         ORDER BY e.grade_average DESC, e.start_number`
+      ).all(round.category_id);
+      return res.json({ kind: 'grading', label: 'Grading', rows });
+    }
     if (round.kind === 'final') {
       const rows = db.prepare(
         `SELECT p.place, p.tie, e.start_number AS number, e.name1, e.name2, e.disqualified
@@ -1286,6 +1299,13 @@ function createServer(db, opts = {}) {
   app.post('/api/judge/:oid/dance/:rdid/cross', wrap((req, res) => {
     if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
     const r = J.setCross(db, +req.params.rdid, +req.params.oid, req.body.entryId, req.body.value);
+    if (r.ok) broadcast('mark:update', { roundDanceId: +req.params.rdid, officialId: +req.params.oid });
+    res.json(r);
+  }));
+
+  app.post('/api/judge/:oid/dance/:rdid/score', wrap((req, res) => {
+    if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
+    const r = J.setScore(db, +req.params.rdid, +req.params.oid, req.body.entryId, req.body.value);
     if (r.ok) broadcast('mark:update', { roundDanceId: +req.params.rdid, officialId: +req.params.oid });
     res.json(r);
   }));

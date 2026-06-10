@@ -384,7 +384,7 @@ function renderCatRow(cat){
   if (cat.starting_round_options && cat.starting_round_options.length > 1) {
     roundSelectHtml = `
       <label style="font-size:12px;color:var(--muted);margin-left:12px">Round 1</label>
-      <select id="frk-${cat.id}" onchange="toggleFinalsDropdown(${cat.id}, ${cat.entry_count})" style="background:var(--surface-active);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none">
+      <select id="frk-${cat.id}" style="background:var(--surface-active);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none">
         ${cat.starting_round_options.map(o => `<option value="${o.kind}" ${currentKind === o.kind ? 'selected' : ''}>${o.label}</option>`).join('')}
       </select>
     `;
@@ -395,24 +395,15 @@ function renderCatRow(cat){
     `;
   }
 
-  const showFinalsSelect = (currentKind !== 'final' && cat.entry_count > 8);
-
   return `<div class="cat-row ${cat.chairman_confirmed?'confirmed':''}" id="catrow-${cat.id}">
     <div class="bib">${cat.entry_count}</div>
     <div>
       <div class="cat-name">${esc(cat.name)}</div>
-      <div class="cat-meta">${cat.suggested_first_round} · ${cat.entry_count} couples · Finals: ${fc}</div>
+      <div class="cat-meta">${cat.suggested_first_round} · ${cat.entry_count} couples · Final: 6 (auto)</div>
     </div>
     <div class="sp"></div>
     <div class="cat-actions">
       ${roundSelectHtml}
-      <span id="fc-container-${cat.id}" style="display: ${showFinalsSelect ? 'inline-flex' : 'none'}; align-items: center; gap: 8px;">
-        <label style="font-size:12px;color:var(--muted);margin-left:12px">Finals</label>
-        <select id="fc-${cat.id}" style="background:var(--surface-active);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;outline:none">
-          <option value="6" ${fc===6?'selected':''}>Final: 6 couples</option>
-          <option value="8" ${fc===8?'selected':''}>Final: 8 couples</option>
-        </select>
-      </span>
       ${cat.chairman_confirmed
         ? `<span class="badge badge-ok">✓ Confirmed</span>
            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="unconfirmCat(${cat.id})">Undo</button>`
@@ -423,23 +414,15 @@ function renderCatRow(cat){
 }
 
 function toggleFinalsDropdown(catId, entryCount) {
-  const frkEl = document.getElementById('frk-' + catId);
-  const container = document.getElementById('fc-container-' + catId);
-  if (!container) return;
-  const val = frkEl ? frkEl.value : 'final';
-  if (val === 'final' || entryCount <= 8) {
-    container.style.display = 'none';
-  } else {
-    container.style.display = 'inline-flex';
-  }
+  /* Finals size is now automatic (default 6, expands on a boundary tie),
+     so there is no finals dropdown to toggle. Kept as a safe no-op. */
 }
 
 async function confirmCat(catId){
-  const fc=+document.getElementById('fc-'+catId).value;
   const frkEl=document.getElementById('frk-'+catId);
   const frk=frkEl ? frkEl.value : null;
   try{
-    await post(`/api/chairman/category/${catId}/confirm-structure`,{finals_count:fc, first_round_kind:frk});
+    await post(`/api/chairman/category/${catId}/confirm-structure`,{finals_count:6, first_round_kind:frk});
     toast('Category confirmed ✓');
     renderCategories();
   }catch(e){ toast(e.message,true); }

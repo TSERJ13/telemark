@@ -84,6 +84,8 @@ CREATE TABLE entry (
   is_seeded         INTEGER NOT NULL DEFAULT 0,
   added_manually    INTEGER NOT NULL DEFAULT 0,
   final_place       INTEGER,
+  grade             TEXT,
+  grade_average     REAL,
   disqualified      INTEGER NOT NULL DEFAULT 0,
   dq_reason         TEXT,
   synced_at         TEXT
@@ -139,6 +141,7 @@ CREATE TABLE mark (
   score_mm       REAL,
   score_ps       REAL,
   score_cp       REAL,
+  grade_score    REAL,
   confirmed_at   TEXT,
   UNIQUE(round_dance_id, official_id, entry_id)
 );

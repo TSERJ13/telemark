@@ -666,7 +666,30 @@
             const tableContainer = document.createElement('div');
             tableContainer.className = 'results-table-container';
 
-            if (String(res.kind).toLowerCase() === 'final') {
+            if (String(res.kind).toLowerCase() === 'grading') {
+              tableContainer.innerHTML = `
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="text-align: center; width: 110px;">Grade</th>
+                      <th style="text-align: center; width: 90px;">#Number</th>
+                      <th>Competitor / Couple</th>
+                      <th style="text-align: center; width: 90px;">Average</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${res.rows.map(x => `
+                      <tr>
+                        <td class="td-place">${gradeLabel(x.grade)}</td>
+                        <td class="td-number">${x.number}</td>
+                        <td class="td-couple">${escapeHtml(name(x))}</td>
+                        <td class="td-crosses">${x.grade_average != null ? x.grade_average.toFixed(2) : '—'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+            } else if (String(res.kind).toLowerCase() === 'final') {
               // Compute tie range labels: group tied rows and show "13-15" format
               const rowsWithLabel = computePlaceLabels(res.rows);
               tableContainer.innerHTML = `
@@ -750,6 +773,11 @@
 
     function name(x) {
       return x.name2 ? `${x.name1} & ${x.name2}` : x.name1;
+    }
+
+    function gradeLabel(g) {
+      const map = { 'I': 'I · Gold', 'II': 'II · Silver', 'III': 'III · Bronze' };
+      return map[g] || (g || '—');
     }
 
     function escapeHtml(str) {

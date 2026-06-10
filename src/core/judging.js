@@ -36,7 +36,7 @@ function getMarkingView(db, roundDanceId, officialId) {
     .prepare(
       `SELECT he.heat_number, e.id AS entry_id, e.start_number, e.name1, e.name2, e.status,
               m.place, m.cross_mark, m.is_helpmark, m.confirmed_at,
-              m.score_tq, m.score_mm, m.score_ps, m.score_cp
+              m.score_tq, m.score_mm, m.score_ps, m.score_cp, m.grade_score
        FROM heat_entry he
        JOIN entry e ON e.id = he.entry_id
        LEFT JOIN mark m ON m.entry_id = e.id AND m.round_dance_id = he.round_dance_id
@@ -62,10 +62,12 @@ function getMarkingView(db, roundDanceId, officialId) {
       score_mm: c.score_mm ?? null,
       score_ps: c.score_ps ?? null,
       score_cp: c.score_cp ?? null,
+      grade_score: c.grade_score ?? null,
     });
   }
 
   const isFinal = String(rd.kind).toLowerCase() === 'final';
+  const isGrading = String(rd.kind).toLowerCase() === 'grading' || judgingSystem === 'grading';
   const numCouples = couples.length;
   const target = isFinal ? numCouples : rd.recall_count;
 
@@ -78,6 +80,8 @@ function getMarkingView(db, roundDanceId, officialId) {
     dance: rd.dance_code,
     kind: rd.kind,
     isFinal,
+    isGrading,
+    gradingScaleMax: 3,
     target,               // final: place 1..N ; intermediate: crosses to give
     numCouples,
     confirmed,
@@ -159,6 +163,16 @@ function setHelp(db, roundDanceId, officialId, entryId, value) {
 
 /* ---- checksum (computed from the judge's marks, on device) -------- */
 function computeChecksum(view, marks) {
+  if (view.isGrading || view.judgingSystem === 'grading') {
+    const scores = marks.map((m) => m.grade_score).filter((s) => s != null);
+    const complete = scores.length === view.numCouples && marks.length >= view.numCouples;
+    const sum = scores.reduce((a, b) => a + b, 0);
+    return {
+      value: `Σ${sum.toFixed(1)}`,
+      valid: complete,
+      detail: { sum, complete, given: scores.length, expected: view.numCouples },
+    };
+  }
   if (view.judgingSystem === 'js3.0') {
     const allScores = [];
     let complete = true;
@@ -212,11 +226,20 @@ function setComponents(db, roundDanceId, officialId, entryId, scores) {
   return { ok: true };
 }
 
+/* ---- grading: a single numeric score per dancer ------------------ */
+function setScore(db, roundDanceId, officialId, entryId, value) {
+  if (isConfirmed(db, roundDanceId, officialId))
+    return { ok: false, reason: 'locked' };
+  const v = value == null || value === '' ? null : Number(value);
+  upsertMark(db, roundDanceId, officialId, entryId, { grade_score: v });
+  return { ok: true };
+}
+
 /* ---- confirm a dance: validate, store checksum, lock marks -------- */
 function confirmDance(db, roundDanceId, officialId) {
   const view = getMarkingView(db, roundDanceId, officialId);
   const marks = db
-    .prepare('SELECT place, cross_mark, score_tq, score_mm, score_ps, score_cp FROM mark WHERE round_dance_id=? AND official_id=?')
+    .prepare('SELECT place, cross_mark, score_tq, score_mm, score_ps, score_cp, grade_score FROM mark WHERE round_dance_id=? AND official_id=?')
     .all(roundDanceId, officialId);
   const cs = computeChecksum(view, marks);
   if (!cs.valid) return { ok: false, reason: 'invalid', checksum: cs };
@@ -274,6 +297,6 @@ function reopenDance(db, roundDanceId, officialId) {
 }
 
 module.exports = {
-  getMarkingView, setPlace, setCross, setHelp, setComponents,
+  getMarkingView, setPlace, setCross, setHelp, setComponents, setScore,
   confirmDance, signChecksum, reopenDance, computeChecksum,
 };

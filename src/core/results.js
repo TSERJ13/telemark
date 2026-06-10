@@ -52,7 +52,7 @@ function roundContext(db, roundId) {
 function entriesInRound(db, roundId) {
   return db
     .prepare(
-      `SELECT DISTINCT e.id, e.start_number
+      `SELECT DISTINCT e.id, e.start_number, e.name1, e.name2
        FROM heat_entry he
        JOIN round_dance rd ON rd.id = he.round_dance_id
        JOIN entry e ON e.id = he.entry_id
@@ -112,6 +112,10 @@ function computeRecall(db, roundId) {
 function computeFinal(db, roundId) {
   const { round, cat, dances, judges } = roundContext(db, roundId);
   const entries = entriesInRound(db, roundId);
+
+  if (cat.judging_system === 'grading' || round.kind === 'grading') {
+    return computeGradingResults(db, roundId, { round, cat, dances, judges, entries });
+  }
 
   if (cat.judging_system === 'js3.0') {
     const markStmt = db.prepare(
@@ -236,4 +240,59 @@ function computeFinal(db, roundId) {
   };
 }
 
-module.exports = { computeRecall, computeFinal, entriesInRound, judgesOf };
+/* ---- GRADING: average scores -> grades (no ranking) -------------- */
+function computeGradingResults(db, roundId, ctx) {
+  const grading = require('./grading');
+  const { round, dances, judges, entries } = ctx;
+
+  const markStmt = db.prepare(
+    'SELECT grade_score FROM mark WHERE round_dance_id=? AND official_id=? AND entry_id=?'
+  );
+
+  // Collect every score each dancer received, across all judges and dances.
+  const rows = entries.map((e) => {
+    const scores = [];
+    for (const rd of dances) {
+      for (const j of judges) {
+        const m = markStmt.get(rd.id, j.id, e.id);
+        if (m && m.grade_score != null) scores.push(m.grade_score);
+      }
+    }
+    return { entry_id: e.id, scores };
+  });
+
+  const graded = grading.computeGrades(rows); // sorted by average desc
+
+  const upd = db.prepare('UPDATE entry SET grade=?, grade_average=?, final_place=? WHERE id=?');
+  db.exec('BEGIN');
+  try {
+    graded.forEach((g, i) => {
+      upd.run(g.grade, g.average, i + 1, g.entry_id);
+    });
+    db.prepare("UPDATE round SET status='closed' WHERE id=?").run(roundId);
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+
+  audit(db, 'scrutineer', 'grading.compute', { roundId, count: graded.length });
+
+  return {
+    kind: 'grading',
+    label: 'Grading',
+    results: graded.map((g) => {
+      const e = entries.find((x) => x.id === g.entry_id) || {};
+      return {
+        entry_id: g.entry_id,
+        number: e.start_number,
+        name: e.name2 ? `${e.name1} & ${e.name2}` : e.name1,
+        average: g.average,
+        grade: g.grade,
+        label: g.label,
+      };
+    }),
+  };
+}
+
+module.exports = { computeRecall, computeFinal, computeGradingResults, entriesInRound, judgesOf };

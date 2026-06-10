@@ -797,8 +797,9 @@ async function renderCat(c){
           <div style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--surface2);border:1px solid var(--line);padding:4px 10px;border-radius:8px">
             <span style="color:var(--muted);font-weight:600">Judging System:</span>
             <select onchange="changeJudgingSystem(${fresh.id}, this.value)" style="background:transparent;border:none;color:var(--accent);font-weight:700;font-family:inherit;outline:none;cursor:pointer">
-              <option value="skating" style="background:#111;color:#fff" ${fresh.judging_system !== 'js3.0' ? 'selected' : ''}>Relative (Skating System)</option>
+              <option value="skating" style="background:#111;color:#fff" ${fresh.judging_system !== 'js3.0' && fresh.judging_system !== 'grading' ? 'selected' : ''}>Relative (Skating System)</option>
               <option value="js3.0" style="background:#111;color:#fff" ${fresh.judging_system === 'js3.0' ? 'selected' : ''}>Absolute WDSF JS 3.0 (Points)</option>
+              <option value="grading" style="background:#111;color:#fff" ${fresh.judging_system === 'grading' ? 'selected' : ''}>Grading / Festival (Grades)</option>
             </select>
           </div>
         </div>
@@ -893,6 +894,7 @@ function toggleRoundJudgeSheets(rid) {
 async function roundCard(r){
   const card=document.createElement('div'); card.className='round'; card.id='round-'+r.id;
   const isFinal=String(r.kind).toLowerCase()==='final';
+  const isGrading=String(r.kind).toLowerCase()==='grading';
 
   // Collapsible header
   const hdr = document.createElement('div');
@@ -1015,7 +1017,7 @@ async function roundCard(r){
   }
 
   const cbtn=document.createElement('button'); cbtn.className='btn primary';
-  cbtn.textContent=isFinal?'Compute final placing':'Compute recall';
+  cbtn.textContent=isGrading?'Compute grades':(isFinal?'Compute final placing':'Compute recall');
   cbtn.onclick=async()=>{
     cbtn.disabled = true;
     const oldText = cbtn.textContent;
@@ -1023,7 +1025,7 @@ async function roundCard(r){
     cbtn.style.opacity = '0.7';
     cbtn.style.cursor = 'not-allowed';
     try {
-      const res = await POST('/api/scrutineer/round/'+r.id+'/'+(isFinal?'final':'recall'));
+      const res = await POST('/api/scrutineer/round/'+r.id+'/'+((isFinal||isGrading)?'final':'recall'));
       if (res.error) throw new Error(res.error);
       await boot();
       if(activeCat){

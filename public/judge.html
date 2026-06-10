@@ -823,7 +823,13 @@ function render(){
 
   const flat=Object.entries(view.heats).sort((a,b)=>a[0]-b[0]);
 
-  if (!view.isFinal) {
+  if (view.isGrading) {
+    // Grading / Festival: each dancer gets a score (1..max), no places/crosses
+    flat.forEach(([h,couples])=>{
+      if(flat.length>1){const l=document.createElement('div');l.className='heat-label';l.textContent='Heat '+h;main.appendChild(l);}
+      couples.forEach(c=>main.appendChild(gradeRow(c)));
+    });
+  } else if (!view.isFinal) {
     // Intermediate: one big tile grid across all heats
     if(flat.length>1) {
       // Show heat labels above each group but still use a single grid flow
@@ -861,7 +867,16 @@ function updateUI() {
   if (!view) return;
   const flat = Object.values(view.heats).flat();
   flat.forEach(c => {
-    if (!view.isFinal) {
+    if (view.isGrading) {
+      const row = document.querySelector(`.grow[data-entry-id="${c.entry_id}"]`);
+      if (row) {
+        const max = view.gradingScaleMax || 3;
+        for (let s = 1; s <= max; s++) {
+          const b = row.querySelector(`button[data-score="${s}"]`);
+          if (b) b.className = 'pl' + (c.grade_score === s ? ' on' : '');
+        }
+      }
+    } else if (!view.isFinal) {
       // Intermediate round tile updates
       const tile = document.querySelector(`.tile[data-entry-id="${c.entry_id}"]`);
       if (tile) {
@@ -909,6 +924,31 @@ function updateUI() {
     }
   });
   updateChecksum();
+}
+
+function gradeRow(c){
+  const row=el('div','row grow');
+  row.setAttribute('data-entry-id', c.entry_id);
+  row.innerHTML='<span class="bib">'+c.number+'</span><span class="nm">'+(c.name?c.name:'')+'</span>';
+  const wrap=el('div','places');
+  const max = view.gradingScaleMax || 3;
+  for(let s=1;s<=max;s++){
+    const b=el('button','pl'+(c.grade_score===s?' on':''));b.textContent=s;
+    b.setAttribute('data-score', s);
+    b.disabled=view.confirmed;
+    b.onclick=async()=>{
+      if (c.grade_score === s) return;
+      const old = c.grade_score;
+      c.grade_score = s;
+      updateUI();
+      try {
+        const r = await POST('/api/judge/'+me.id+'/dance/'+rdid+'/score',{entryId:c.entry_id,value:s});
+        if (r && !r.ok) { c.grade_score = old; flash(r.error || 'შეცდომა'); updateUI(); }
+      } catch(err) { c.grade_score = old; flash('კავშირის შეცდომა'); updateUI(); }
+    };
+    wrap.appendChild(b);
+  }
+  row.appendChild(wrap); return row;
 }
 
 function finalRow(c){
