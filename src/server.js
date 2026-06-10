@@ -1175,7 +1175,7 @@ function createServer(db, opts = {}) {
 
     const cat = db.prepare('SELECT finals_count FROM category WHERE id=?').get(prevRound.category_id);
     const finalsCount = cat?.finals_count || 6;
-    const { kind, recallCount } = nextRoundKind(recalledCount, finalsCount);
+    const { kind, recallCount } = nextRoundKind(prevRound.kind, recalledCount, finalsCount);
     const drawMode = kind === 'final' ? 'fixed_heats' : 'random_all_same';
     const prevDances = db.prepare('SELECT dance_code FROM round_dance WHERE round_id=? ORDER BY dance_order').all(prevRound.id);
 

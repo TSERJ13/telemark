@@ -126,3 +126,42 @@ test('roundLabel uses fraction style (1/2 Final not Semifinal)', () => {
   assert.strictEqual(roundLabel('r8'), '1/8 Final');
   assert.strictEqual(roundLabel('final'), 'Final');
 });
+
+test('round ladder never repeats a kind (18 couples)', () => {
+  const { firstRoundKind, nextRoundKind } = require('../src/db');
+  let cur = firstRoundKind(18, 6);
+  const kinds = [cur.kind];
+  let guard = 0;
+  while (cur.kind !== 'final' && guard++ < 10) {
+    cur = nextRoundKind(cur.kind, cur.recallCount, 6);
+    kinds.push(cur.kind);
+  }
+  assert.deepStrictEqual(kinds, ['quarterfinal', 'semifinal', 'final']);
+});
+
+test('borderline recall does NOT repeat the round (1/4 recalls 13-15 -> 1/2)', () => {
+  const { nextRoundKind } = require('../src/db');
+  assert.strictEqual(nextRoundKind('quarterfinal', 15, 6).kind, 'semifinal');
+  assert.strictEqual(nextRoundKind('quarterfinal', 13, 6).kind, 'semifinal');
+  assert.strictEqual(nextRoundKind('quarterfinal', 12, 6).kind, 'semifinal');
+});
+
+test('semifinal always goes to final, never another semifinal', () => {
+  const { nextRoundKind } = require('../src/db');
+  assert.strictEqual(nextRoundKind('semifinal', 6, 6).kind, 'final');
+  assert.strictEqual(nextRoundKind('semifinal', 8, 6).kind, 'final');
+});
+
+test('larger field descends without repeats (50 couples)', () => {
+  const { firstRoundKind, nextRoundKind } = require('../src/db');
+  let cur = firstRoundKind(50, 6);
+  const kinds = [cur.kind];
+  let guard = 0;
+  while (cur.kind !== 'final' && guard++ < 10) {
+    cur = nextRoundKind(cur.kind, cur.recallCount, 6);
+    kinds.push(cur.kind);
+  }
+  // no kind appears twice
+  assert.strictEqual(new Set(kinds).size, kinds.length);
+  assert.strictEqual(kinds[kinds.length - 1], 'final');
+});

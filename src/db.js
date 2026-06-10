@@ -45,9 +45,35 @@ function firstRoundKind(entryCount, finalsCount = 6) {
   return { kind: 'final', recallCount: null };
 }
 
-/** Given the count of recalled couples, return the next round kind */
-function nextRoundKind(recalledCount, finalsCount = 6) {
-  return firstRoundKind(recalledCount, finalsCount);
+/** Strict ladder order from largest to smallest (Final is last). */
+const LADDER_ORDER = ['r128','r64','r32','r16','r8','quarterfinal','semifinal','final'];
+
+/** Recall target for a given round kind (how many it recalls into the NEXT round). */
+function recallForKind(kind, finalsCount = 6) {
+  if (kind === 'final') return null;
+  if (kind === 'semifinal') return finalsCount;            // recall to the final
+  if (kind === 'quarterfinal') return Math.min(12, finalsCount * 2);
+  const step = ROUND_LADDER.find(s => s.kind === kind);
+  return step ? step.recallTo : finalsCount;
+}
+
+/**
+ * Given the PREVIOUS round's kind and how many couples it recalled, return the
+ * next round's kind + recall count. A round kind can NEVER repeat: every round
+ * is strictly lower on the ladder than the one before it, so the sequence is
+ * always …→1/8→1/4→1/2→Final. We pick the natural kind for the recalled count,
+ * but if that would be the same tier (or higher) as the previous round — which
+ * happens on borderline recalls, e.g. a 1/4 Final that recalls 13–15 — we force
+ * a descent of exactly one step toward the Final.
+ */
+function nextRoundKind(prevKind, recalledCount, finalsCount = 6) {
+  const prevIdx = LADDER_ORDER.indexOf(prevKind);
+  const byCount = firstRoundKind(recalledCount, finalsCount);
+  let idx = LADDER_ORDER.indexOf(byCount.kind);
+  if (prevIdx !== -1 && idx <= prevIdx) idx = prevIdx + 1;   // never repeat / go up
+  if (idx >= LADDER_ORDER.length) idx = LADDER_ORDER.length - 1; // clamp to Final
+  const kind = LADDER_ORDER[idx];
+  return { kind, recallCount: recallForKind(kind, finalsCount) };
 }
 
 /** Human-readable label for a round kind */
