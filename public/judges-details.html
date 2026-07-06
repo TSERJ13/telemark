@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Telemark · მსაჯების დეტალები</title>
+<link rel="icon" type="image/png" href="/logo_telemark.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#09080d;--surface:rgba(19,17,26,.78);--surface2:rgba(28,25,38,.92);
+  --ink:#ece9f0;--muted:#8d899a;--line:rgba(255,255,255,.08);
+  --accent:#00e5ff;--ok:#3ec896;--ok-bg:rgba(62,200,150,.12);
+  --warn:#ffd600;--danger:#ff5252;--num:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Outfit',-apple-system,sans-serif;font-size:15px;min-height:100vh}
+header{display:flex;align-items:center;gap:14px;padding:10px 20px;background:rgba(10,9,14,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.logo{font-weight:800;font-size:20px;text-decoration:none;background:linear-gradient(135deg,#fff 30%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sp{flex:1}
+.navlink{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line)}
+.navlink:hover{color:var(--ink);border-color:var(--accent)}
+main{max-width:1200px;margin:0 auto;padding:24px 20px}
+h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px;backdrop-filter:blur(10px)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.btn{padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#06222a;border:none}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+th{text-align:left;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.02)}
+.idx{color:var(--muted);font-family:var(--num);width:34px}
+.letter{font-family:var(--num);font-weight:700;color:var(--accent);width:30px;text-align:center}
+input[type=text],input[type=email],select{width:100%;min-width:90px;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:13px}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+td.chk{text-align:center;width:70px}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:26px 0}
+.addbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.addbar input{flex:1;min-width:140px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--accent);color:var(--ink);padding:12px 20px;border-radius:12px;font-weight:600;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.hint{color:var(--muted);font-size:12px;margin-top:12px;line-height:1.5}
+.dirty td{background:rgba(255,214,0,.06)}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/scrutineer.html">Telemark</a>
+  <div class="sp"></div>
+  <a class="navlink" href="/judges.html">მსაჯები (მატრიცა)</a>
+  <a class="navlink" href="/scrutineer.html">მთავარი</a>
+</header>
+
+<main>
+  <h1>მსაჯების დეტალები</h1>
+  <div class="sub">მსაჯების სრული ცხრილი — კლუბი, ქალაქი, ელფოსტა, ენა, მთავარი მსაჯი, სპორტ-ინსპექტორი. (ცეკვებზე მიკუთვნება ხდeba „მსაჯები (მატრიცა)" გვერდზე.)</div>
+
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary" onclick="saveAll()">💾 შენახვა</button>
+      <span class="sp"></span>
+      <span id="count" class="hint" style="margin:0"></span>
+    </div>
+
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="idx">#</th>
+            <th class="letter">◇</th>
+            <th>სახელი / გვარი</th>
+            <th>კლუბი</th>
+            <th>ქალაქი</th>
+            <th>ელფოსტა</th>
+            <th>ენა</th>
+            <th class="chk">მთავარი</th>
+            <th class="chk">ინსპექტ.</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="empty" style="display:none">
+      ჯერ მსაჯები არ არის. დაამატე ქვემოთ.
+    </div>
+
+    <div class="addbar">
+      <input type="text" id="newName" placeholder="ახალი მსაჯი — სახელი გვარი" onkeydown="if(event.key==='Enter')addJudge()"/>
+      <input type="text" id="newClub" placeholder="კლუბი (არასავალდებულო)" onkeydown="if(event.key==='Enter')addJudge()"/>
+      <button class="btn" onclick="addJudge()">+ დამატება</button>
+    </div>
+
+    <div class="hint">
+      „მთავარი" = Chairman (მთავარი მსაჯი), „ინსპექტ." = Sport inspector. ცვლილება მოინიშნება ყვითლად — დააჭირე „შენახვა" დასამახსოვრებლად. მონიშვნები (checkbox) მაშინვე ინახება.
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const api = async (p, o = {}) => {
+  const r = await fetch(p, o);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+};
+const POST  = (p, b) => api(p, { method: 'POST',  headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) });
+const PATCH = (p, b) => api(p, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) });
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LANGS = ['', 'ქართული', 'English', 'Русский', 'Українська'];
+
+let toastT;
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1900); }
+
+let judges = [];
+
+async function load() {
+  try { judges = await api('/api/judges/details'); }
+  catch (e) { judges = []; toast('ჩატვირთვის შეცდომა: ' + e.message); }
+  render();
+}
+
+function render() {
+  const tb = document.getElementById('rows');
+  document.getElementById('emptyState').style.display = judges.length ? 'none' : 'block';
+  document.getElementById('count').textContent = judges.length ? (judges.length + ' მსაჯი') : '';
+  tb.innerHTML = judges.map((j, i) => `
+    <tr data-id="${j.id}">
+      <td class="idx">${i + 1}</td>
+      <td class="letter">${esc(j.judge_letter || '')}</td>
+      <td><input type="text" value="${esc(j.full_name)}" data-f="full_name" oninput="markDirty(${j.id})"/></td>
+      <td><input type="text" value="${esc(j.studio_name)}" data-f="studio_name" oninput="markDirty(${j.id})"/></td>
+      <td><input type="text" value="${esc(j.city)}" data-f="city" oninput="markDirty(${j.id})"/></td>
+      <td><input type="email" value="${esc(j.email)}" data-f="email" oninput="markDirty(${j.id})"/></td>
+      <td>
+        <select data-f="language" oninput="markDirty(${j.id})">
+          ${LANGS.map(l => `<option value="${esc(l)}" ${(j.language || '') === l ? 'selected' : ''}>${l || '—'}</option>`).join('')}
+        </select>
+      </td>
+      <td class="chk"><input type="checkbox" ${j.is_chairman ? 'checked' : ''} onchange="toggleFlag(${j.id},'is_chairman',this)"/></td>
+      <td class="chk"><input type="checkbox" ${j.is_sport_inspector ? 'checked' : ''} onchange="toggleFlag(${j.id},'is_sport_inspector',this)"/></td>
+    </tr>`).join('');
+}
+
+function markDirty(id) {
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if (tr) tr.classList.add('dirty');
+}
+
+async function toggleFlag(id, field, cb) {
+  cb.disabled = true;
+  try {
+    await PATCH(`/api/judges/${id}/details`, { [field]: cb.checked ? 1 : 0 });
+    const j = judges.find(x => x.id === id); if (j) j[field] = cb.checked ? 1 : 0;
+    toast('შენახულია ✓');
+  } catch (e) { cb.checked = !cb.checked; toast('შეცდომა: ' + e.message); }
+  finally { cb.disabled = false; }
+}
+
+async function saveRow(tr) {
+  const id = +tr.dataset.id;
+  const g = (f) => tr.querySelector(`[data-f="${f}"]`);
+  const payload = {
+    full_name: g('full_name').value,
+    studio_name: g('studio_name').value,
+    city: g('city').value,
+    email: g('email').value,
+    language: g('language').value
+  };
+  await PATCH(`/api/judges/${id}/details`, payload);
+  const j = judges.find(x => x.id === id); if (j) Object.assign(j, payload);
+  tr.classList.remove('dirty');
+}
+
+async function saveAll() {
+  const dirty = [...document.querySelectorAll('tr.dirty')];
+  if (!dirty.length) { toast('ცვლილება არ არის'); return; }
+  try { for (const tr of dirty) await saveRow(tr); toast(`შენახულია ${dirty.length} ✓`); }
+  catch (e) { toast('შენახვის შეცდომა: ' + e.message); }
+}
+
+async function addJudge() {
+  const name = document.getElementById('newName').value.trim();
+  const club = document.getElementById('newClub').value.trim();
+  if (!name) { document.getElementById('newName').focus(); return; }
+  try {
+    // create via the basic endpoint, then it appears with details defaults
+    await POST('/api/judges', { full_name: name, studio_name: club });
+    document.getElementById('newName').value = '';
+    document.getElementById('newClub').value = '';
+    await load();
+    toast('მსაჯი დაემატა ✓');
+  } catch (e) { toast('შეცდომა: ' + e.message); }
+}
+
+function connectWS() {
+  try {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${proto}://${location.host}`);
+    ws.onmessage = (ev) => {
+      try { const m = JSON.parse(ev.data); if (m && m.type === 'judges:updated' && !document.querySelector('tr.dirty')) load(); } catch (_) {}
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+  } catch (_) {}
+}
+
+load();
+connectWS();
+</script>
+</body>
+</html>

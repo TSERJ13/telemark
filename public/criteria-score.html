@@ -52,6 +52,23 @@ input.score.saved{border-color:var(--ok);background:var(--ok-bg)}
 .toast.show{opacity:1}
 .hint{color:var(--muted);font-size:12px;margin-top:10px;line-height:1.5}
 .pill{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--ok-bg);color:var(--ok);font-size:11px;font-weight:700}
+.btn{padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+
+/* ── print protocol (hidden on screen, shown only when printing) ── */
+#printRoot{display:none}
+@media print{
+  body{background:#fff !important;color:#000 !important}
+  header,main,#toast{display:none !important}
+  #printRoot{display:block !important;color:#000;font-family:'Outfit',sans-serif;padding:0}
+  #printRoot h2{font-size:18px;margin:0 0 2px}
+  #printRoot .meta{font-size:12px;color:#333;margin-bottom:14px}
+  #printRoot table{width:100%;border-collapse:collapse;font-size:12px}
+  #printRoot th,#printRoot td{border:1px solid #999;padding:5px 7px;text-align:center}
+  #printRoot td.l{text-align:left}
+  #printRoot .pl{font-weight:800}
+  #printRoot .foot{margin-top:18px;font-size:11px;color:#555}
+}
 </style>
 </head>
 <body>
@@ -89,6 +106,7 @@ input.score.saved{border-color:var(--ok);background:var(--ok-bg)}
   </div>
 </main>
 
+<div id="printRoot"></div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -219,7 +237,10 @@ async function renderResults() {
   const rows = r.results || [];
   if (!rows.length || rows.every(x => x.total === 0)) { panel.innerHTML = '<div class="empty">ჯერ ქულები არ არის შეყვანილი.</div>'; return; }
 
-  panel.innerHTML = `<div class="wrap"><table><thead><tr>
+  panel.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn" onclick="printProtocol()">🖨 პროტოკოლის ბეჭდვა (PDF)</button>
+    </div>
+    <div class="wrap"><table><thead><tr>
     <th>ადგილი</th><th style="text-align:left">#</th><th style="text-align:left">მონაწილე</th>
     <th>ჯამი</th><th>საშუალო</th><th>მსაჯების რაოდ.</th></tr></thead><tbody>
     ${rows.map(x => `<tr>
@@ -231,6 +252,47 @@ async function renderResults() {
       <td class="num">${x.judges_scored}</td>
     </tr>`).join('')}
   </tbody></table></div>`;
+}
+
+// build a clean printable protocol and open the print dialog (Save as PDF)
+async function printProtocol() {
+  const catId = +document.getElementById('catSel').value;
+  let p;
+  try { p = await api('/api/criteria-scoring/' + catId + '/protocol'); }
+  catch (e) { toast('შეცდომა: ' + e.message); return; }
+
+  const c = p.competition || {};
+  const meta = [c.location, c.event_date].filter(Boolean).join(' · ');
+  const judgeCols = p.judges.map(j => `<th>${esc(j.judge_letter || j.full_name)}</th>`).join('');
+  const scored = p.results.filter(r => r.total > 0);
+
+  const bodyRows = scored.map(r => `
+    <tr>
+      <td class="pl">${r.place ?? '—'}</td>
+      <td>${r.start_number ?? '—'}</td>
+      <td class="l">${esc(r.name)}${r.studio_name ? ' — ' + esc(r.studio_name) : ''}</td>
+      ${p.judges.map(j => `<td>${r.perJudge[j.id] == null ? '' : r.perJudge[j.id]}</td>`).join('')}
+      <td class="pl">${r.total}</td>
+    </tr>`).join('');
+
+  document.getElementById('printRoot').innerHTML = `
+    <h2>${esc(c.name || 'Telemark')}</h2>
+    <div class="meta">${esc(meta)}${c.organizer_names ? ' · ' + esc(c.organizer_names) : ''}</div>
+    <div style="font-weight:700;margin-bottom:8px">${esc(p.category.name)} — პროტოკოლი (criteria)</div>
+    <table>
+      <thead><tr>
+        <th>ადგილი</th><th>#</th><th class="l">მონაწილე</th>
+        ${judgeCols}
+        <th>ჯამი</th>
+      </tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+    <div class="foot">
+      კრიტერიუმები: ${p.criteria.map(x => esc(x.name)).join(', ')}<br>
+      მსაჯები: ${p.judges.map(j => esc((j.judge_letter ? j.judge_letter + '=' : '') + j.full_name)).join(', ')}<br>
+      დაბეჭდილია: ${new Date().toLocaleString('ka-GE')}
+    </div>`;
+  setTimeout(() => window.print(), 50);
 }
 
 // live refresh when other devices submit scores

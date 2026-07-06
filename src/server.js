@@ -416,9 +416,32 @@ function createServer(db, opts = {}) {
     const count = db.prepare('SELECT COUNT(*) AS c FROM criteria WHERE competition_id=?').get(comp.id).c;
     if (count > 0) return res.json({ ok: true, seeded: 0, note: 'criteria already exist' });
 
+    // FlyMark's full criteria set (Img 12) — English names are exact;
+    // Georgian names are localized translations the organizer can edit.
     const defaults = [
-      ['ტექნიკა', 'Technique'], ['მუსიკალურობა', 'Musicality'], ['ქორეოგრაფია', 'Choreography'],
-      ['არტისტიზმი', 'Artistry'], ['შესრულების დონე', 'Level of execution'], ['იმიჯი', 'Image']
+      ['არტისტიზმი', 'Artistry'],
+      ['იმიჯი', 'Image'],
+      ['კრეატიულობა', 'Creativity'],
+      ['სანახაობრიობა', 'Entertainment'],
+      ['დინამიკა', 'Dynamic'],
+      ['მუსიკალურობა', 'Musicality'],
+      ['სინქრონულობა', 'Synchronization'],
+      ['სტილების რაოდენობა', 'Number of style'],
+      ['სირთულე', 'Complexity'],
+      ['შესრულების დონე', 'Level of execution'],
+      ['ტექნიკა', 'Technique'],
+      ['კომპოზიცია', 'Composition'],
+      ['სახე / образ', 'Character'],
+      ['ლექსიკა', 'Vocabulary'],
+      ['სტილი', 'Style'],
+      ['შესრულების ხარისხი', 'Quality'],
+      ['ქორეოგრაფია', 'Choreographic'],
+      ['გამომსახველობა', 'Expression'],
+      ['ურთიერთქმედება', 'Interaction'],
+      ['სტილთან შესაბამისობა', 'Consistency of style'],
+      ['ჰარმონიულობა', 'Harmony'],
+      ['შოუ', 'Show'],
+      ['შეთანხმებულობა', 'Coherence']
     ];
     const ins = db.prepare(
       `INSERT INTO criteria (competition_id, name, name_en, range_min, range_max, sort_order, allow_double)
@@ -534,6 +557,105 @@ function createServer(db, opts = {}) {
 
     results.forEach((r, i) => { r.place = i + 1; });
     res.json({ results });
+  }));
+
+  // Detailed protocol for printing: competition + category + full per-judge
+  // and per-criterion breakdown, ranked. Read-only, additive.
+  app.get('/api/criteria-scoring/:catId/protocol', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const catId = +req.params.catId;
+    const category = db.prepare('SELECT id, name FROM category WHERE id=? AND competition_id=?').get(catId, comp.id);
+    if (!category) return res.status(404).json({ error: 'Category not found' });
+
+    const criteria = db.prepare(
+      `SELECT id, name, name_en, range_min, range_max FROM criteria
+       WHERE competition_id=? AND active=1 ORDER BY sort_order, id`
+    ).all(comp.id);
+    const judges = db.prepare(
+      `SELECT id, full_name, judge_letter FROM official
+       WHERE competition_id=? AND role='judge' ORDER BY judge_letter NULLS LAST, id`
+    ).all(comp.id);
+    const entries = db.prepare(
+      `SELECT id, start_number, name1, name2, studio_name FROM entry
+       WHERE category_id=? AND status!='withdrawn'`
+    ).all(catId);
+    const marks = db.prepare(
+      `SELECT official_id, entry_id, criterion_id, score FROM criteria_mark WHERE category_id=?`
+    ).all(catId);
+
+    // build per-entry aggregation
+    const detail = entries.map(e => {
+      const perJudge = {};
+      let grand = 0;
+      for (const j of judges) {
+        const jm = marks.filter(m => m.entry_id === e.id && m.official_id === j.id);
+        const jt = jm.reduce((s, m) => s + (m.score || 0), 0);
+        perJudge[j.id] = jm.length ? jt : null;
+        grand += jt;
+      }
+      return {
+        entry_id: e.id,
+        start_number: e.start_number,
+        name: e.name2 ? `${e.name1} & ${e.name2}` : e.name1,
+        studio_name: e.studio_name,
+        perJudge,
+        total: Math.round(grand * 100) / 100
+      };
+    }).sort((a, b) => b.total - a.total);
+    detail.forEach((d, i) => { d.place = d.total > 0 ? i + 1 : null; });
+
+    res.json({
+      competition: { name: comp.name, event_date: comp.event_date, location: comp.location, organizer_names: comp.organizer_names },
+      category, criteria, judges, results: detail
+    });
+  }));
+
+  // ── Rich judge metadata (FlyMark-style judges table) ─────────────────
+  // Separate from the basic /api/judges routes so the existing add flow is
+  // untouched. Purely additive.
+  app.get('/api/judges/details', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.json([]);
+    const rows = db.prepare(
+      `SELECT id, full_name, judge_letter, role, studio_name, city, email, language,
+              is_chairman, is_sport_inspector
+       FROM official WHERE competition_id=? AND role='judge'
+       ORDER BY judge_letter NULLS LAST, full_name`
+    ).all(comp.id);
+    res.json(rows);
+  }));
+
+  app.patch('/api/judges/:id/details', wrap((req, res) => {
+    if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const id = +req.params.id;
+    const cur = db.prepare('SELECT id FROM official WHERE id=? AND competition_id=?').get(id, comp.id);
+    if (!cur) return res.status(404).json({ error: 'Judge not found' });
+
+    const b = req.body || {};
+    // only update provided fields (partial update)
+    const sets = [], vals = [];
+    const setIf = (key, col, transform) => {
+      if (Object.prototype.hasOwnProperty.call(b, key)) {
+        sets.push(`${col}=?`);
+        vals.push(transform ? transform(b[key]) : (b[key] ?? null));
+      }
+    };
+    setIf('full_name', 'full_name', v => String(v || '').trim() || 'Judge');
+    setIf('studio_name', 'studio_name', v => (String(v || '').trim() || null));
+    setIf('city', 'city', v => (String(v || '').trim() || null));
+    setIf('email', 'email', v => (String(v || '').trim() || null));
+    setIf('language', 'language', v => (String(v || '').trim() || null));
+    setIf('is_chairman', 'is_chairman', v => (v ? 1 : 0));
+    setIf('is_sport_inspector', 'is_sport_inspector', v => (v ? 1 : 0));
+    if (!sets.length) return res.json({ ok: true, unchanged: true });
+
+    vals.push(id, comp.id);
+    db.prepare(`UPDATE official SET ${sets.join(', ')} WHERE id=? AND competition_id=?`).run(...vals);
+    broadcast('judges:updated', {});
+    res.json({ ok: true });
   }));
 
   app.get('/api/judges/assignments', wrap((req, res) => {

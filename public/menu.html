@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Telemark · მართვის პანელი</title>
+<link rel="icon" type="image/png" href="/logo_telemark.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#09080d;--surface:rgba(19,17,26,.78);--surface2:rgba(28,25,38,.92);
+  --ink:#ece9f0;--muted:#8d899a;--line:rgba(255,255,255,.08);
+  --accent:#00e5ff;--ok:#3ec896;--ok-bg:rgba(62,200,150,.12);
+  --warn:#ffd600;--danger:#ff5252;--num:'JetBrains Mono',ui-monospace,monospace;
+  --sidebar:#0d0b13;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Outfit',-apple-system,sans-serif;font-size:15px;min-height:100vh;display:flex}
+
+/* ── sidebar ─────────────────────────────────────────────── */
+.sidebar{width:250px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
+.brand{padding:18px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.brand .logo{font-weight:800;font-size:22px;letter-spacing:-.02em;background:linear-gradient(135deg,#fff 30%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand img{width:26px;height:26px;border-radius:6px}
+.navgroup{padding:12px 0}
+.navlabel{padding:6px 20px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.navitem{display:flex;align-items:center;gap:12px;padding:11px 20px;color:var(--ink);text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;transition:background .15s}
+.navitem:hover{background:rgba(255,255,255,.04);border-left-color:var(--accent)}
+.navitem .ico{width:20px;text-align:center;opacity:.8;font-size:15px}
+.navitem .tag{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--ok-bg);color:var(--ok)}
+
+/* ── main ────────────────────────────────────────────────── */
+.main{flex:1;min-width:0;padding:28px 32px;max-width:1100px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+.topbar h1{font-size:24px;font-weight:800}
+.comp{color:var(--muted);font-size:14px}
+.comp b{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:26px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.stat .v{font-family:var(--num);font-size:30px;font-weight:800;color:var(--accent)}
+.stat .l{color:var(--muted);font-size:12px;margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin:22px 0 12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tile .ti{font-size:22px}
+.tile .tt{font-weight:700;font-size:15px}
+.tile .td{color:var(--muted);font-size:12px;line-height:1.4}
+.tile .tag{align-self:flex-start;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--ok-bg);color:var(--ok);margin-top:2px}
+.hamb{display:none}
+@media(max-width:820px){
+  .sidebar{position:fixed;left:0;top:0;z-index:200;transform:translateX(-100%);transition:transform .2s}
+  .sidebar.open{transform:translateX(0)}
+  .hamb{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-size:20px;cursor:pointer}
+  .main{padding:20px}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <img src="/logo_telemark.png" alt=""/>
+    <span class="logo">Telemark</span>
+  </div>
+
+  <div class="navgroup">
+    <div class="navlabel">მართვა</div>
+    <a class="navitem" href="/scrutineer.html"><span class="ico">🎛</span> მთავარი პანელი</a>
+    <a class="navitem" href="/chairman.html"><span class="ico">⚖️</span> მთავარი მსაჯი</a>
+    <a class="navitem" href="/results.html"><span class="ico">🏆</span> შედეგები</a>
+  </div>
+
+  <div class="navgroup">
+    <div class="navlabel">მსაჯები</div>
+    <a class="navitem" href="/judges.html"><span class="ico">👥</span> მსაჯები &amp; მატრიცა</a>
+    <a class="navitem" href="/judges-details.html"><span class="ico">📇</span> მსაჯების დეტალები <span class="tag">ახალი</span></a>
+    <a class="navitem" href="/judge.html"><span class="ico">📱</span> მსაჯის ტაბლეტი</a>
+  </div>
+
+  <div class="navgroup">
+    <div class="navlabel">Criteria (artistic)</div>
+    <a class="navitem" href="/criteria.html"><span class="ico">📋</span> კრიტერიუმები <span class="tag">ახალი</span></a>
+    <a class="navitem" href="/criteria-score.html"><span class="ico">✍️</span> criteria შეფასება <span class="tag">ახალი</span></a>
+  </div>
+
+  <div class="navgroup">
+    <div class="navlabel">სისტემა</div>
+    <a class="navitem" href="/settings.html"><span class="ico">⚙️</span> პარამეტრები</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamb" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <h1>მართვის პანელი</h1>
+    <div class="sp" style="flex:1"></div>
+    <div class="comp" id="compInfo">იტვირთება…</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="v" id="stCats">–</div><div class="l">კატეგორია</div></div>
+    <div class="stat"><div class="v" id="stJudges">–</div><div class="l">მსაჯი</div></div>
+    <div class="stat"><div class="v" id="stEntries">–</div><div class="l">მონაწილე</div></div>
+    <div class="stat"><div class="v" id="stCriteria">–</div><div class="l">კრიტერიუმი</div></div>
+  </div>
+
+  <div class="section-title">სწრაფი წვდომა</div>
+  <div class="cards">
+    <a class="tile" href="/scrutineer.html"><div class="ti">🎛</div><div class="tt">მთავარი პანელი</div><div class="td">კატეგორიები, რაუნდები, სესიები, რეგისტრაცია</div></a>
+    <a class="tile" href="/judges.html"><div class="ti">👥</div><div class="tt">მსაჯები &amp; მატრიცა</div><div class="td">მსაჯების დამატება და კატეგორიებზე მიკუთვნება</div></a>
+    <a class="tile" href="/judges-details.html"><div class="ti">📇</div><div class="tt">მსაჯების დეტალები</div><div class="td">კლუბი, ქალაქი, ელფოსტა, ენა, ჩეარმანი</div><span class="tag">ახალი</span></a>
+    <a class="tile" href="/criteria.html"><div class="ti">📋</div><div class="tt">კრიტერიუმები</div><div class="td">artistic განსჯის კრიტერიუმები + კატეგორიები</div><span class="tag">ახალი</span></a>
+    <a class="tile" href="/criteria-score.html"><div class="ti">✍️</div><div class="tt">criteria შეფასება</div><div class="td">ქულების შეყვანა და შედეგები + PDF</div><span class="tag">ახალი</span></a>
+    <a class="tile" href="/results.html"><div class="ti">🏆</div><div class="tt">შედეგები</div><div class="td">კატეგორიების შედეგები და პროტოკოლები</div></a>
+    <a class="tile" href="/chairman.html"><div class="ti">⚖️</div><div class="tt">მთავარი მსაჯი</div><div class="td">ცოცხალი მონიტორინგი და დადასტურება</div></a>
+    <a class="tile" href="/settings.html"><div class="ti">⚙️</div><div class="tt">პარამეტრები</div><div class="td">სინქრონიზაცია, იმპორტი, კონფიგურაცია</div></a>
+  </div>
+</div>
+
+<script>
+const api = async (p) => { const r = await fetch(p); return r.ok ? r.json() : null; };
+
+async function loadDashboard() {
+  try {
+    const comp = await api('/api/competition');
+    if (comp && comp.name) {
+      const meta = [comp.location, comp.event_date].filter(Boolean).join(' · ');
+      document.getElementById('compInfo').innerHTML = `<b>${comp.name}</b>${meta ? ' · ' + meta : ''}`;
+    } else {
+      document.getElementById('compInfo').textContent = 'შეჯიბრი არ არის ჩატვირთული';
+    }
+  } catch (_) { document.getElementById('compInfo').textContent = ''; }
+
+  try {
+    const ov = await api('/api/scrutineer/overview');
+    const cats = (ov && ov.categories) || [];
+    document.getElementById('stCats').textContent = cats.length;
+    document.getElementById('stEntries').textContent = cats.reduce((s, c) => s + (c.entry_count || 0), 0);
+  } catch (_) {}
+
+  try {
+    const judges = await api('/api/judges');
+    document.getElementById('stJudges').textContent = Array.isArray(judges) ? judges.filter(j => j.role === 'judge' || !j.role).length : '–';
+  } catch (_) {}
+
+  try {
+    const crit = await api('/api/criteria');
+    document.getElementById('stCriteria').textContent = Array.isArray(crit) ? crit.length : '0';
+  } catch (_) {}
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

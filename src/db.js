@@ -223,6 +223,19 @@ function openDb(file = ':memory:', opts = {}) {
       )`);
     }
 
+    // Rich judge metadata (FlyMark-style): city, email, language, and the
+    // chairman / sport-inspector flags. Additive columns; safe on fresh &
+    // existing DBs. (Club is already covered by official.studio_name.)
+    {
+      const oCols = db.prepare(`PRAGMA table_info(official)`).all().map(c => c.name);
+      const addCol = (name, decl) => { if (!oCols.includes(name)) db.exec(`ALTER TABLE official ADD COLUMN ${name} ${decl};`); };
+      addCol('city',              'TEXT');
+      addCol('email',             'TEXT');
+      addCol('language',          'TEXT');
+      addCol('is_chairman',       'INTEGER NOT NULL DEFAULT 0');
+      addCol('is_sport_inspector','INTEGER NOT NULL DEFAULT 0');
+    }
+
     // ── Guarantee sync_state id=1 always exists ──────────────────────
     const hasSyncRow = db.prepare('SELECT id FROM sync_state WHERE id=1').get();
     if (!hasSyncRow) {
