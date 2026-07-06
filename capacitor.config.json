@@ -2,5 +2,15 @@
   "appId": "one.telemark.app",
   "appName": "Telemark",
   "webDir": "public",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "startPage": "judge.html"
+  },
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
 }

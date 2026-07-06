@@ -45,44 +45,17 @@ function firstRoundKind(entryCount, finalsCount = 6) {
   return { kind: 'final', recallCount: null };
 }
 
-/** Strict ladder order from largest to smallest (Final is last). */
-const LADDER_ORDER = ['r128','r64','r32','r16','r8','quarterfinal','semifinal','final'];
-
-/** Recall target for a given round kind (how many it recalls into the NEXT round). */
-function recallForKind(kind, finalsCount = 6) {
-  if (kind === 'final') return null;
-  if (kind === 'semifinal') return finalsCount;            // recall to the final
-  if (kind === 'quarterfinal') return Math.min(12, finalsCount * 2);
-  const step = ROUND_LADDER.find(s => s.kind === kind);
-  return step ? step.recallTo : finalsCount;
-}
-
-/**
- * Given the PREVIOUS round's kind and how many couples it recalled, return the
- * next round's kind + recall count. A round kind can NEVER repeat: every round
- * is strictly lower on the ladder than the one before it, so the sequence is
- * always …→1/8→1/4→1/2→Final. We pick the natural kind for the recalled count,
- * but if that would be the same tier (or higher) as the previous round — which
- * happens on borderline recalls, e.g. a 1/4 Final that recalls 13–15 — we force
- * a descent of exactly one step toward the Final.
- */
-function nextRoundKind(prevKind, recalledCount, finalsCount = 6) {
-  const prevIdx = LADDER_ORDER.indexOf(prevKind);
-  const byCount = firstRoundKind(recalledCount, finalsCount);
-  let idx = LADDER_ORDER.indexOf(byCount.kind);
-  if (prevIdx !== -1 && idx <= prevIdx) idx = prevIdx + 1;   // never repeat / go up
-  if (idx >= LADDER_ORDER.length) idx = LADDER_ORDER.length - 1; // clamp to Final
-  const kind = LADDER_ORDER[idx];
-  return { kind, recallCount: recallForKind(kind, finalsCount) };
+/** Given the count of recalled couples, return the next round kind */
+function nextRoundKind(recalledCount, finalsCount = 6) {
+  return firstRoundKind(recalledCount, finalsCount);
 }
 
 /** Human-readable label for a round kind */
 function roundLabel(kind) {
   const MAP = {
-    final: 'Final', semifinal: '1/2 Final', quarterfinal: '1/4 Final',
+    final: 'Final', semifinal: 'Semifinal', quarterfinal: '1/4 Final',
     r8: '1/8 Final', r16: '1/16 Final', r32: '1/32 Final',
     r64: '1/64 Final', r128: '1/128 Final', redance: 'Redance',
-    grading: 'Grading',
   };
   return MAP[kind] || kind;
 }
@@ -162,26 +135,12 @@ function openDb(file = ':memory:', opts = {}) {
         db.exec('ALTER TABLE category ADD COLUMN finals_count INTEGER DEFAULT 6;');
       if (!catCols.includes('first_round_kind'))
         db.exec('ALTER TABLE category ADD COLUMN first_round_kind TEXT;');
-      if (!catCols.includes('dances'))
-        db.exec('ALTER TABLE category ADD COLUMN dances TEXT;');
-      if (!catCols.includes('discipline'))
-        db.exec('ALTER TABLE category ADD COLUMN discipline TEXT;');
-      if (!catCols.includes('judging_system'))
-        db.exec("ALTER TABLE category ADD COLUMN judging_system TEXT DEFAULT 'skating';");
 
       const entryCols = colNames('entry');
       if (!entryCols.includes('disqualified'))
         db.exec('ALTER TABLE entry ADD COLUMN disqualified INTEGER NOT NULL DEFAULT 0;');
       if (!entryCols.includes('dq_reason'))
         db.exec('ALTER TABLE entry ADD COLUMN dq_reason TEXT;');
-      if (!entryCols.includes('grade'))
-        db.exec('ALTER TABLE entry ADD COLUMN grade TEXT;');
-      if (!entryCols.includes('grade_average'))
-        db.exec('ALTER TABLE entry ADD COLUMN grade_average REAL;');
-
-      // mark: grading score (Festival/Grading mode)
-      if (markCols.length && !markCols.includes('grade_score'))
-        db.exec('ALTER TABLE mark ADD COLUMN grade_score REAL;');
 
       // category_judge
       if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='category_judge'").get())
@@ -226,6 +185,26 @@ function openDb(file = ':memory:', opts = {}) {
       // official.studio_name
       if (!colNames('official').includes('studio_name'))
         db.exec('ALTER TABLE official ADD COLUMN studio_name TEXT;');
+    }
+
+    // ── Criteria feature (additive; FlyMark-style artistic judging) ───
+    // A flexible catalogue of scoring criteria (e.g. Technique, Musicality),
+    // each scored on its own range (default 1-20). Used by criteria-based
+    // categories instead of the fixed skating/WDSF components. Fully removable:
+    // dropping this table + its routes + criteria.html leaves the app intact.
+    if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='criteria'").get()) {
+      db.exec(`CREATE TABLE criteria (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        competition_id INTEGER REFERENCES competition(id) ON DELETE CASCADE,
+        name           TEXT NOT NULL,
+        name_en        TEXT,
+        range_min      INTEGER NOT NULL DEFAULT 1,
+        range_max      INTEGER NOT NULL DEFAULT 20,
+        sort_order     INTEGER NOT NULL DEFAULT 0,
+        allow_double   INTEGER NOT NULL DEFAULT 0,
+        active         INTEGER NOT NULL DEFAULT 1,
+        created_at     TEXT DEFAULT (datetime('now'))
+      )`);
     }
 
     // ── Guarantee sync_state id=1 always exists ──────────────────────
@@ -295,12 +274,12 @@ function getStartingRoundOptions(entryCount) {
   if (entryCount >= 7 && entryCount <= 8) {
     return [
       { kind: 'final', label: 'Final' },
-      { kind: 'semifinal', label: '1/2 Final' }
+      { kind: 'semifinal', label: 'Semifinal' }
     ];
   }
   if (entryCount >= 13 && entryCount <= 15) {
     return [
-      { kind: 'semifinal', label: '1/2 Final' },
+      { kind: 'semifinal', label: 'Semifinal' },
       { kind: 'quarterfinal', label: '1/4 Final' }
     ];
   }

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Telemark · Chairman</title>
+<link rel="icon" type="image/png" href="/logo_telemark.png"/>
+<style>
+  :root {
+    --bg: #0e0c17;
+    --surface: #1a1724;
+    --surface2: #231f30;
+    --line: rgba(255,255,255,.09);
+    --ink: #f0eeff;
+    --muted: #7a748e;
+    --accent: #7c3aed;
+    --accent-glow: rgba(124,58,237,.35);
+    --ok: #22d3a5;
+    --ok-bg: rgba(34,211,165,.1);
+    --warn: #f3b73e;
+    --warn-bg: rgba(243,183,62,.1);
+    --danger: #ff5252;
+    --danger-bg: rgba(255,82,82,.1);
+    --gold: #f5c518;
+    --num: 'SF Mono', 'Fira Code', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+  /* ── HEADER ── */
+  header{position:sticky;top:0;z-index:50;background:rgba(14,12,23,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:10px 16px;gap:12px}
+  .logo{width:32px;height:32px;object-fit:contain}
+  .header-title{font-size:15px;font-weight:700;flex:1}
+  .header-subtitle{font-size:11px;color:var(--muted);font-weight:500}
+  .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);transition:background .4s}
+  .conn-dot.on{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .settings-btn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600}
+
+  /* ── MAIN ── */
+  main{padding:12px 14px 80px;display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto}
+
+  /* ── DROPDOWN ── */
+  .dropdown { position: relative; display: inline-block; margin-right: 12px; }
+  .dropbtn { background: transparent; border: none; color: var(--ink); font-size: 24px; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s; }
+  .dropbtn:hover { background: rgba(255,255,255,0.1); }
+  .dropdown-content { display: none; position: absolute; right: 0; top: 40px; background-color: var(--surface2); min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 100; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; }
+  .dropdown-content a { color: var(--ink); padding: 14px 16px; text-decoration: none; display: block; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--line); }
+  .dropdown-content a:last-child { border-bottom: none; }
+  .dropdown-content a:hover { background-color: var(--surface-hover); }
+  .dropdown.show .dropdown-content { display: block; }
+
+  /* ── SECTION CARD ── */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .card-header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface2)}
+  .card-icon{font-size:16px}
+  .card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .card-body{padding:14px 16px}
+
+  /* ── JUDGES GRID ── */
+  .judges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+  .judge-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:border-color .3s}
+  .judge-chip.online{border-color:var(--ok)}
+  .judge-chip.offline{opacity:.55}
+  .judge-letter{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:13px;font-weight:800;background:var(--accent);color:#fff;flex-shrink:0}
+  .judge-chip.online .judge-letter{background:var(--ok);color:#000}
+  .judge-chip.offline .judge-letter{background:rgba(255,255,255,.08)}
+  .judge-info{min-width:0}
+  .judge-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+  .judge-status{font-size:10px;color:var(--muted)}
+  .judge-chip.online .judge-status{color:var(--ok)}
+
+  /* ── CATEGORY STATS ── */
+  .cat-stats{display:flex;gap:10px;margin-bottom:14px}
+  .stat-box{flex:1;background:var(--surface2);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--line)}
+  .stat-num{font-size:28px;font-weight:800;font-family:var(--num);color:var(--ink)}
+  .stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+  /* ── NUMBERS GRID ── */
+  .numbers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+  .num-chip{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center;font-family:var(--num);font-size:16px;font-weight:800;color:var(--ink)}
+
+  /* ── NEXT CATEGORY ── */
+  .next-cat-name{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+  .judge-row-list{display:flex;flex-direction:column;gap:6px}
+  .judge-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--surface2);border:1px solid var(--line)}
+  .judge-row .badge{font-family:var(--num);font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:28px;text-align:center}
+  .badge-stay{background:rgba(34,211,165,.15);color:var(--ok);border:1px solid rgba(34,211,165,.3)}
+  .badge-new{background:rgba(124,58,237,.2);color:#a78bfa;border:1px solid rgba(124,58,237,.35)}
+  .section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:10px 0 6px}
+  .call-out-box{background:rgba(243,183,62,.08);border:1px solid rgba(243,183,62,.25);border-radius:12px;padding:12px 14px;margin-top:10px}
+  .call-out-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);margin-bottom:6px}
+  .call-out-letters{font-size:24px;font-weight:800;font-family:var(--num);color:var(--gold);letter-spacing:4px}
+
+  /* ── WAITING STATE ── */
+  .waiting{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:12px;text-align:center}
+  .pulse-ring{width:48px;height:48px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .waiting p{font-size:14px;color:var(--muted)}
+
+  /* ── SETTINGS MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:#1a1724;border:1px solid var(--line);border-radius:20px;padding:28px;width:340px;max-width:92vw;display:flex;flex-direction:column;gap:16px}
+  .modal h2{font-size:17px;font-weight:700}
+  .modal label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+  .modal input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:14px;outline:none;font-family:inherit}
+  .modal input:focus{border-color:var(--accent)}
+  .modal-footer{display:flex;justify-content:flex-end;gap:10px}
+  .btn{padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:none}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 12px var(--accent-glow)}
+
+  /* ── LOGIN ── */
+  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .login-card{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:20px}
+  .pin-display{width:100%;height:52px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:12px;font-family:var(--num);font-size:28px;font-weight:800;text-align:center;letter-spacing:14px;color:var(--ink);caret-color:transparent;outline:none}
+  .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+  .numpad-btn{height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;active:scale(.96)}
+  .numpad-btn:active{transform:scale(.94);background:var(--surface2)}
+  .login-title{font-size:17px;font-weight:700;text-align:center}
+  .login-sub{font-size:12px;color:var(--muted);text-align:center}
+  #loginError{color:var(--danger);font-size:13px;font-weight:600;text-align:center;min-height:20px}
+
+  /* ── REFRESH indicator ── */
+  .refresh-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:var(--accent);transform-origin:left;animation:refreshAnim 5s linear infinite}
+  @keyframes refreshAnim{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+  .logout-btn{position:fixed;bottom:14px;right:14px;background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:50px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;z-index:10}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img src="/logo_telemark.png" alt="Telemark" style="width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 20px rgba(124,58,237,.4))"/>
+    <div>
+      <div class="login-title">Chairman Dashboard</div>
+      <div class="login-sub" style="margin-top:4px">Enter PIN</div>
+    </div>
+    <input type="text" class="pin-display" id="pinDisplay" readonly placeholder="····" autocomplete="off"/>
+    <div class="numpad">
+      <button class="numpad-btn" onclick="pinDigit(1)">1</button>
+      <button class="numpad-btn" onclick="pinDigit(2)">2</button>
+      <button class="numpad-btn" onclick="pinDigit(3)">3</button>
+      <button class="numpad-btn" onclick="pinDigit(4)">4</button>
+      <button class="numpad-btn" onclick="pinDigit(5)">5</button>
+      <button class="numpad-btn" onclick="pinDigit(6)">6</button>
+      <button class="numpad-btn" onclick="pinDigit(7)">7</button>
+      <button class="numpad-btn" onclick="pinDigit(8)">8</button>
+      <button class="numpad-btn" onclick="pinDigit(9)">9</button>
+      <button class="numpad-btn" onclick="pinClear()" style="color:var(--danger);font-size:14px">C</button>
+      <button class="numpad-btn" onclick="pinDigit(0)">0</button>
+      <button class="numpad-btn" onclick="pinDel()" style="font-size:14px">⌫</button>
+    </div>
+    <div id="loginError"></div>
+    <div style="font-size:11px;color:var(--muted);text-align:center">
+      Server: <span id="serverLabel" style="color:var(--ink);font-weight:600">—</span>
+      <button onclick="openSettings()" style="background:transparent;border:none;color:var(--accent);font-size:11px;cursor:pointer;margin-left:6px;font-family:inherit">Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboardScreen" style="display:none">
+  <header>
+    <img class="logo" src="/logo_telemark.png" alt="Telemark"/>
+    <div style="flex:1">
+      <div class="header-title" id="compName">Telemark</div>
+      <div class="header-subtitle" id="compDate">Chairman Dashboard</div>
+    </div>
+    <div class="dropdown" id="chairMenu">
+      <button class="dropbtn" onclick="document.getElementById('chairMenu').classList.toggle('show')">☰</button>
+      <div class="dropdown-content">
+        <a href="/chairman.html#categories">Categories</a>
+        <a href="/chairman.html#ties">Tie Breaking</a>
+        <a href="/chairman.html#live">Live Floor</a>
+        <a href="/chairman.html#print">Print</a>
+      </div>
+    </div>
+    <div class="conn-dot" id="connDot"></div>
+  </header>
+
+  <main id="dashMain">
+    <div class="waiting"><div class="pulse-ring"></div><p>Loading...</p></div>
+  </main>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+  <div class="refresh-bar" id="refreshBar"></div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>⚙ Server Settings</h2>
+    <div>
+      <label>Server Address (IP:PORT)</label>
+      <input type="text" id="serverInput" placeholder="192.168.1.100:4000"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Server URL helpers ────────────────────────────────────────────────────
+function getServerBase() {
+  let h = localStorage.getItem('telemark_server_url');
+  if (!h) h = window.location.origin;
+  return h.replace(/\/$/, '');
+}
+function apiUrl(path) { return getServerBase() + path; }
+
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────
+function openSettings() {
+  let h = localStorage.getItem('telemark_server_url') || '';
+  h = h.replace(/^https?:\/\//, '');
+  document.getElementById('serverInput').value = h;
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings() {
+  const raw = document.getElementById('serverInput').value.trim();
+  if (raw) {
+    const url = /^https?:\/\//.test(raw)
+      ? raw
+      : (raw.includes('localhost') || raw.includes('192.168.') || raw.includes('10.') || raw.includes('172.') ? 'http://' : 'https://') + raw;
+    localStorage.setItem('telemark_server_url', url);
+  } else {
+    localStorage.removeItem('telemark_server_url');
+  }
+  closeSettings();
+  updateServerLabel();
+  if (document.getElementById('loginScreen').style.display !== 'none') {
+    // on login screen — just update label
+  } else {
+    load();
+  }
+}
+function updateServerLabel() {
+  const h = localStorage.getItem('telemark_server_url') || window.location.origin;
+  document.getElementById('serverLabel').textContent = h.replace(/^https?:\/\//, '');
+}
+
+// ── PIN input ─────────────────────────────────────────────────────────────
+let _pin = '';
+function pinDigit(n) {
+  if (_pin.length >= 4) return;
+  _pin += n;
+  document.getElementById('pinDisplay').value = '●'.repeat(_pin.length);
+  if (_pin.length === 4) submitPin();
+}
+function pinClear() { _pin = ''; document.getElementById('pinDisplay').value = ''; }
+function pinDel()   { _pin = _pin.slice(0,-1); document.getElementById('pinDisplay').value = '●'.repeat(_pin.length); }
+
+async function submitPin() {
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  try {
+    const res = await fetch(apiUrl('/api/judges/login'), {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ pin: _pin })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Incorrect PIN');
+    if (data.role !== 'chairman') {
+      throw new Error('This PIN is for a Judge. Please use a Chairman PIN.');
+    }
+    // Logged in as chairman
+    // Also fetch JWT token for Web Portal seamlessly
+    try {
+      const res2 = await fetch(apiUrl('/api/chairman/login'), {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pin: _pin })
+      });
+      const data2 = await res2.json();
+      if (res2.ok && data2.token) {
+        localStorage.setItem('chairman_token', data2.token);
+      }
+    } catch(e) { console.error('Failed to get web portal token', e); }
+
+    localStorage.setItem('telemark_chairman_name', data.full_name);
+    showDashboard();
+  } catch(e) {
+    err.textContent = e.message;
+    pinClear();
+  }
+}
+
+// ── Auth / logout ─────────────────────────────────────────────────────────
+function showDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboardScreen').style.display = 'block';
+  connectWS();
+  load();
+  setInterval(load, 5000);
+}
+function logout() {
+  localStorage.removeItem('telemark_chairman_name');
+  document.getElementById('dashboardScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  pinClear();
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+let ws = null;
+function connectWS() {
+  const base = getServerBase();
+  const host = base.replace(/^https?:\/\//, '');
+  const proto = host.includes('localhost') || host.includes('192.168.') || host.includes('10.') || host.includes('172.') ? 'ws' : 'wss';
+  ws = new WebSocket(proto + '://' + host);
+  ws.onopen  = () => document.getElementById('connDot').classList.add('on');
+  ws.onclose = () => { document.getElementById('connDot').classList.remove('on'); setTimeout(connectWS, 3000); };
+  ws.onmessage = (e) => {
+    const { type } = JSON.parse(e.data);
+    if (['judges:diagnostics','dance:open','dance:reopened'].includes(type)) load();
+  };
+}
+
+// ── Load dashboard data ───────────────────────────────────────────────────
+async function load() {
+  try {
+    const res = await fetch(apiUrl('/api/chairman/app-dashboard'));
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    render(data);
+  } catch(e) {
+    document.getElementById('dashMain').innerHTML =
+      `<div class="waiting"><p style="color:var(--danger)">Failed to connect to server</p></div>`;
+  }
+}
+
+function render(data) {
+  if (data.competition) {
+    document.getElementById('compName').textContent = data.competition.name;
+    document.getElementById('compDate').textContent = 'Chairman · ' + (data.competition.event_date || '');
+  }
+
+  const main = document.getElementById('dashMain');
+  let html = '';
+
+  // ── 1. Judges ──────────────────────────────────────────────────────────
+  const judges = (data.judges || []).filter(j => j.role === 'judge');
+  const onlineCount = judges.filter(j => j.online).length;
+  html += `
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">👥</span>
+      <span class="card-title">Judges — ${onlineCount}/${judges.length} Online</span>
+    </div>
+    <div class="card-body">
+      <div class="judges-grid">
+        ${judges.map(j => `
+          <div class="judge-chip ${j.online ? 'online' : 'offline'}">
+            <div class="judge-letter">${j.judge_letter || '?'}</div>
+            <div class="judge-info">
+              <div class="judge-name">${esc(j.full_name)}</div>
+              <div class="judge-status">${j.online
+                ? (j.battery != null ? `🔋${j.battery}%` : '✓ Online')
+                : 'Offline'}</div>
+            </div>
+          </div>`).join('')}
+        ${judges.length === 0 ? '<div style="color:var(--muted);font-size:13px">No judges assigned</div>' : ''}
+      </div>
+    </div>
+  </div>`;
+
+  // ── 2. Active Category ─────────────────────────────────────────────────
+  const ac = data.activeCategory;
+  if (ac) {
+    const kindLabel = {
+      'qualification':'I Round','recall':'II Round','semifinal':'Semifinal',
+      'final':'Final','grading':'Grading'
+    }[ac.kind] || ac.kind;
+    html += `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🎯</span>
+        <span class="card-title">Active Category</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:17px;font-weight:700;margin-bottom:12px">${esc(ac.name)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${kindLabel}</div>
+        <div class="cat-stats">
+          <div class="stat-box">
+            <div class="stat-num">${ac.entry_count}</div>
+            <div class="stat-lbl">${ac.entry_count === 1 ? 'Entry' : 'Entries'}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">${ac.floor_count}</div>
+            <div class="stat-lbl">On Floor</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">${ac.judges ? ac.judges.length : 0}</div>
+            <div class="stat-lbl">Judges</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Start Numbers</div>
+        <div class="numbers-grid">
+          ${ac.entries.map(e => `<div class="num-chip">${e.start_number ?? '—'}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  } else {
+    html += `
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🎯</span><span class="card-title">Active Category</span></div>
+      <div class="waiting"><div class="pulse-ring"></div><p>No active category</p></div>
+    </div>`;
+  }
+
+  // ── 3. Next Category ───────────────────────────────────────────────────
+  const nc = data.nextCategory;
+  if (nc) {
+    const stayLetters = nc.staying.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+    const newLetters  = nc.newJudges.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+    const callLetters = nc.newJudges.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+    html += `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">⏭️</span>
+        <span class="card-title">Next Category</span>
+      </div>
+      <div class="card-body">
+        <div class="next-cat-name">${esc(nc.name)} <span style="font-size:13px;color:var(--muted);font-weight:500">(${nc.entry_count} entries)</span></div>
+        ${nc.staying.length > 0 ? `
+        <div class="section-lbl">✅ Staying</div>
+        <div class="judge-row-list">
+          ${nc.staying.map(j => `
+            <div class="judge-row">
+              <span class="badge badge-stay">${j.judge_letter || '?'}</span>
+              <span style="font-size:13px;font-weight:600">${esc(j.full_name)}</span>
+              <span style="margin-left:auto;font-size:11px;color:var(--ok)">Staying</span>
+            </div>`).join('')}
+        </div>` : ''}
+        ${nc.newJudges.length > 0 ? `
+        <div class="section-lbl">🆕 New</div>
+        <div class="judge-row-list">
+          ${nc.newJudges.map(j => `
+            <div class="judge-row">
+              <span class="badge badge-new">${j.judge_letter || '?'}</span>
+              <span style="font-size:13px;font-weight:600">${esc(j.full_name)}</span>
+              <span style="margin-left:auto;font-size:11px;color:#a78bfa">New</span>
+            </div>`).join('')}
+        </div>
+        <div class="call-out-box">
+          <div class="call-out-title">📣 Call Out</div>
+          <div class="call-out-letters">${callLetters || '—'}</div>
+        </div>` : `<div style="font-size:13px;color:var(--muted);margin-top:8px">All judges are staying</div>`}
+        ${nc.judges.length === 0 ? `<div style="font-size:13px;color:var(--muted)">Judges not assigned yet</div>` : ''}
+      </div>
+    </div>`;
+  } else if (!ac) {
+    html += `
+    <div class="card">
+      <div class="card-header"><span class="card-icon">⏭️</span><span class="card-title">Next Category</span></div>
+      <div class="waiting"><p>No next category</p></div>
+    </div>`;
+  }
+
+  main.innerHTML = html;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+updateServerLabel();
+if (localStorage.getItem('telemark_chairman_name')) {
+  showDashboard();
+}
+</script>
+</body>
+</html>

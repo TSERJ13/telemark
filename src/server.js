@@ -28,23 +28,6 @@ const { getActiveCompetition, audit, firstRoundKind, nextRoundKind, roundLabel, 
 
 // ─── Round kind helpers ───────────────────────────────────────────────────────
 const DANCE_CODES = ['W','T','VW','F','Q','SB','CC','RU','PD','JI','CH','J'];
-
-// dancesport.ge stores dances as short codes (SW,T,VW,SF,Q,S,CH,R,PD,J).
-// Telemark uses its own codes (W,T,VW,F,Q,SB,CC,RU,PD,JI). Map between them.
-const DANCESPORT_TO_TELEMARK = {
-  SW: 'W',  W: 'W',  T: 'T',  VW: 'VW', SF: 'F',  F: 'F',  Q: 'Q',
-  S: 'SB',  SB: 'SB', CH: 'CC', CC: 'CC', R: 'RU', RU: 'RU',
-  PD: 'PD', J: 'JI',  JI: 'JI',
-};
-function mapDancesportDances(csv) {
-  return (csv || '')
-    .split(',')
-    .map(s => s.trim().toUpperCase())
-    .filter(Boolean)
-    .map(code => DANCESPORT_TO_TELEMARK[code] || code)
-    .filter((code, i, arr) => DANCE_CODES.includes(code) && arr.indexOf(code) === i);
-}
-
 function parseDancesFromName(name) {
   const up = name.toUpperCase();
   const found = [];
@@ -57,14 +40,6 @@ function parseDancesFromName(name) {
     if (!found.includes(code)) found.push(code);
   }
   return found.length ? found : ['W'];
-}
-
-// The authoritative dance list for a category: prefer the explicit `dances`
-// column synced from dancesport.ge; fall back to parsing the category name.
-function dancesForCategory(cat) {
-  const fromColumn = mapDancesportDances(cat && cat.dances);
-  if (fromColumn.length) return fromColumn;
-  return parseDancesFromName(cat ? cat.name : '');
 }
 
 // ─── Outlier detection for chairman live view ─────────────────────────────────
@@ -360,6 +335,100 @@ function createServer(db, opts = {}) {
 
     broadcast('judges:updated', {});
     res.json({ ok: true });
+  }));
+
+  // ── Criteria catalogue (FlyMark-style artistic judging) ──────────────
+  // Additive & self-contained. Remove this block + criteria.html + the
+  // criteria table to fully revert.
+  app.get('/api/criteria', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.json([]);
+    const rows = db.prepare(
+      `SELECT id, name, name_en, range_min, range_max, sort_order, allow_double, active
+       FROM criteria WHERE competition_id=? ORDER BY sort_order, id`
+    ).all(comp.id);
+    res.json(rows);
+  }));
+
+  app.post('/api/criteria', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const { name, name_en, range_min, range_max, allow_double } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'name is required' });
+
+    const rmin = Number.isFinite(+range_min) ? +range_min : 1;
+    const rmax = Number.isFinite(+range_max) ? +range_max : 20;
+    if (rmax <= rmin) return res.status(400).json({ error: 'range_max must be greater than range_min' });
+
+    const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order),0) AS m FROM criteria WHERE competition_id=?').get(comp.id).m;
+    const result = db.prepare(
+      `INSERT INTO criteria (competition_id, name, name_en, range_min, range_max, sort_order, allow_double)
+       VALUES (?,?,?,?,?,?,?)`
+    ).run(comp.id, name.trim(), name_en?.trim() || null, rmin, rmax, maxOrder + 1, allow_double ? 1 : 0);
+
+    broadcast('criteria:updated', {});
+    res.json({ id: result.lastInsertRowid });
+  }));
+
+  // Bulk save (used by the grid "Save" button): updates existing rows in place.
+  app.post('/api/criteria/save', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    const upd = db.prepare(
+      `UPDATE criteria SET name=?, name_en=?, range_min=?, range_max=?, sort_order=?, allow_double=?
+       WHERE id=? AND competition_id=?`
+    );
+    db.exec('BEGIN');
+    try {
+      items.forEach((it, i) => {
+        if (!it || !it.id) return;
+        const rmin = Number.isFinite(+it.range_min) ? +it.range_min : 1;
+        const rmax = Number.isFinite(+it.range_max) ? +it.range_max : 20;
+        upd.run(
+          String(it.name ?? '').trim() || 'Criterion',
+          (it.name_en ?? '').trim() || null,
+          rmin, rmax,
+          Number.isFinite(+it.sort_order) ? +it.sort_order : i + 1,
+          it.allow_double ? 1 : 0,
+          +it.id, comp.id
+        );
+      });
+      db.exec('COMMIT');
+    } catch (e) { db.exec('ROLLBACK'); throw e; }
+    broadcast('criteria:updated', {});
+    res.json({ ok: true, saved: items.length });
+  }));
+
+  app.delete('/api/criteria/:id', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    db.prepare('DELETE FROM criteria WHERE id=? AND competition_id=?').run(+req.params.id, comp.id);
+    broadcast('criteria:updated', {});
+    res.json({ ok: true });
+  }));
+
+  // Seed a standard artistic-criteria set for quick testing (idempotent-ish:
+  // only seeds when the competition currently has zero criteria).
+  app.post('/api/criteria/seed-defaults', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const count = db.prepare('SELECT COUNT(*) AS c FROM criteria WHERE competition_id=?').get(comp.id).c;
+    if (count > 0) return res.json({ ok: true, seeded: 0, note: 'criteria already exist' });
+
+    const defaults = [
+      ['ტექნიკა', 'Technique'], ['მუსიკალურობა', 'Musicality'], ['ქორეოგრაფია', 'Choreography'],
+      ['არტისტიზმი', 'Artistry'], ['შესრულების დონე', 'Level of execution'], ['იმიჯი', 'Image']
+    ];
+    const ins = db.prepare(
+      `INSERT INTO criteria (competition_id, name, name_en, range_min, range_max, sort_order, allow_double)
+       VALUES (?,?,?,1,20,?,0)`
+    );
+    db.exec('BEGIN');
+    try { defaults.forEach((d, i) => ins.run(comp.id, d[0], d[1], i + 1)); db.exec('COMMIT'); }
+    catch (e) { db.exec('ROLLBACK'); throw e; }
+    broadcast('criteria:updated', {});
+    res.json({ ok: true, seeded: defaults.length });
   }));
 
   app.get('/api/judges/assignments', wrap((req, res) => {
@@ -956,45 +1025,6 @@ function createServer(db, opts = {}) {
     res.json({ ok: true });
   }));
 
-  // Wipe the scrutiny (rounds, marks, placings) of ONE category, but keep the
-  // entries, start numbers and judges. Lets you re-run a single category from
-  // scratch without resetting the whole event.
-  app.post('/api/scrutineer/category/:catId/reset-scrutiny', wrap((req, res) => {
-    const catId = +req.params.catId;
-    const cat = db.prepare('SELECT id, name FROM category WHERE id=?').get(catId);
-    if (!cat) return res.status(404).json({ error: 'Category not found. Please refresh the page.' });
-    db.exec('BEGIN');
-    try {
-      // rounds cascade to round_dance -> heat_entry/mark/checksum/recall_result
-      db.prepare('DELETE FROM round WHERE category_id=?').run(catId);
-      db.prepare('DELETE FROM placing WHERE category_id=?').run(catId);
-      db.prepare("UPDATE category SET status='pending' WHERE id=?").run(catId);
-      audit(db, 'system', 'category.reset-scrutiny', { catId, name: cat.name });
-      db.exec('COMMIT');
-    } catch (e) { db.exec('ROLLBACK'); throw e; }
-    broadcast('category:reset', { categoryId: catId });
-    res.json({ ok: true });
-  }));
-
-  // Wipe the scrutiny of ALL categories in the active competition, keeping the
-  // synced data (categories, entries, start numbers) and all judges intact.
-  app.post('/api/scrutineer/reset-categories', wrap((req, res) => {
-    const comp = getActiveCompetition(db);
-    if (!comp) return res.status(400).json({ error: 'No active competition' });
-    db.exec('BEGIN');
-    try {
-      const catIds = db.prepare('SELECT id FROM category WHERE competition_id=?').all(comp.id).map(r => r.id);
-      const delRound   = db.prepare('DELETE FROM round WHERE category_id=?');
-      const delPlacing = db.prepare('DELETE FROM placing WHERE category_id=?');
-      const setPending = db.prepare("UPDATE category SET status='pending' WHERE id=?");
-      for (const id of catIds) { delRound.run(id); delPlacing.run(id); setPending.run(id); }
-      audit(db, 'system', 'categories.reset-scrutiny', { count: catIds.length });
-      db.exec('COMMIT');
-    } catch (e) { db.exec('ROLLBACK'); throw e; }
-    broadcast('categories:reset', {});
-    res.json({ ok: true });
-  }));
-
   app.post('/api/scrutineer/category/:catId/judging-system', wrap((req, res) => {
     if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
     db.prepare('UPDATE category SET judging_system=? WHERE id=?').run(req.body.system, +req.params.catId);
@@ -1020,15 +1050,11 @@ function createServer(db, opts = {}) {
     const existingRound = db.prepare('SELECT id FROM round WHERE category_id=? ORDER BY ordinal DESC LIMIT 1').get(catId);
     if (existingRound) return res.status(409).json({ error: 'Round already initialised for this category.', roundId: existingRound.id });
 
-    const finalDances = dancesForCategory(cat);
+    const finalDances = parseDancesFromName(cat.name);
     const finalsCount = cat.finals_count || 6;
-
+    
     let kind, recallCount;
-    if (cat.judging_system === 'grading') {
-      // Festival/Grading: one round, everyone dances once, no recall/elimination.
-      kind = 'grading';
-      recallCount = null;
-    } else if (cat.first_round_kind) {
+    if (cat.first_round_kind) {
       kind = cat.first_round_kind;
       const step = ROUND_LADDER.find(s => s.kind === kind);
       recallCount = step ? step.recallTo : null;
@@ -1039,7 +1065,7 @@ function createServer(db, opts = {}) {
       kind = resKind.kind;
       recallCount = resKind.recallCount;
     }
-    const drawMode = (kind === 'final' || kind === 'grading') ? 'fixed_heats' : 'random_all_same';
+    const drawMode = kind === 'final' ? 'fixed_heats' : 'random_all_same';
 
     const round = createRound(db, catId, {
       ordinal: 1, kind, dances: finalDances, recallCount, drawMode,
@@ -1130,15 +1156,6 @@ function createServer(db, opts = {}) {
   app.get('/api/scrutineer/round/:rid/results', wrap((req, res) => {
     const round = db.prepare('SELECT * FROM round WHERE id=?').get(+req.params.rid);
     if (!round) return res.status(404).json({ error: 'Round not found' });
-    if (round.kind === 'grading') {
-      const rows = db.prepare(
-        `SELECT e.start_number AS number, e.name1, e.name2, e.grade, e.grade_average, e.disqualified
-         FROM entry e
-         WHERE e.category_id=? AND e.grade IS NOT NULL
-         ORDER BY e.grade_average DESC, e.start_number`
-      ).all(round.category_id);
-      return res.json({ kind: 'grading', label: 'Grading', rows });
-    }
     if (round.kind === 'final') {
       const rows = db.prepare(
         `SELECT p.place, p.tie, e.start_number AS number, e.name1, e.name2, e.disqualified
@@ -1188,7 +1205,7 @@ function createServer(db, opts = {}) {
 
     const cat = db.prepare('SELECT finals_count FROM category WHERE id=?').get(prevRound.category_id);
     const finalsCount = cat?.finals_count || 6;
-    const { kind, recallCount } = nextRoundKind(prevRound.kind, recalledCount, finalsCount);
+    const { kind, recallCount } = nextRoundKind(recalledCount, finalsCount);
     const drawMode = kind === 'final' ? 'fixed_heats' : 'random_all_same';
     const prevDances = db.prepare('SELECT dance_code FROM round_dance WHERE round_id=? ORDER BY dance_order').all(prevRound.id);
 
@@ -1299,13 +1316,6 @@ function createServer(db, opts = {}) {
   app.post('/api/judge/:oid/dance/:rdid/cross', wrap((req, res) => {
     if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
     const r = J.setCross(db, +req.params.rdid, +req.params.oid, req.body.entryId, req.body.value);
-    if (r.ok) broadcast('mark:update', { roundDanceId: +req.params.rdid, officialId: +req.params.oid });
-    res.json(r);
-  }));
-
-  app.post('/api/judge/:oid/dance/:rdid/score', wrap((req, res) => {
-    if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
-    const r = J.setScore(db, +req.params.rdid, +req.params.oid, req.body.entryId, req.body.value);
     if (r.ok) broadcast('mark:update', { roundDanceId: +req.params.rdid, officialId: +req.params.oid });
     res.json(r);
   }));

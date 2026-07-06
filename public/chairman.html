@@ -162,6 +162,54 @@ input[type=password],input[type=text]{width:100%;background:rgba(255,255,255,.05
 input:focus{outline:none;border-color:var(--accent)}
 .err{color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px}
 
+/* ── PIN numpad ── */
+.pin-display{width:100%;height:52px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:12px;font-family:var(--num);font-size:28px;font-weight:800;text-align:center;letter-spacing:14px;color:var(--ink);caret-color:transparent;outline:none}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-bottom:16px}
+.numpad-btn{height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s}
+.numpad-btn:active{transform:scale(.94);background:var(--surface2)}
+
+/* ── DASHBOARD (app) ── */
+.card{background:var(--surface2);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.card-header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(0,0,0,0.1)}
+.card-icon{font-size:16px}
+.card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card-body{padding:14px 16px}
+
+.judges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.judge-chip{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.judge-chip.online{border-color:var(--ok)}
+.judge-chip.offline{opacity:.55}
+.judge-chip .judge-letter{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:13px;font-weight:800;background:var(--accent);color:#fff;flex-shrink:0}
+.judge-chip.online .judge-letter{background:var(--ok);color:#000}
+.judge-chip.offline .judge-letter{background:rgba(255,255,255,.08)}
+.judge-chip .judge-info{min-width:0}
+.judge-chip .judge-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.judge-chip .judge-status{font-size:10px;color:var(--muted)}
+.judge-chip.online .judge-status{color:var(--ok)}
+
+.cat-stats{display:flex;gap:10px;margin-bottom:14px}
+.stat-box{flex:1;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--line)}
+.stat-num{font-size:28px;font-weight:800;font-family:var(--num);color:var(--ink)}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+.numbers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.num-chip{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center;font-family:var(--num);font-size:16px;font-weight:800;color:var(--ink)}
+
+.next-cat-name{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+.judge-row-list{display:flex;flex-direction:column;gap:6px}
+.judge-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.judge-row .badge{font-family:var(--num);font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:28px;text-align:center}
+.badge-stay{background:rgba(34,211,165,.15);color:var(--ok);border:1px solid rgba(34,211,165,.3)}
+.badge-new{background:rgba(124,58,237,.2);color:#a78bfa;border:1px solid rgba(124,58,237,.35)}
+.section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:10px 0 6px}
+.call-out-box{background:rgba(243,183,62,.08);border:1px solid rgba(243,183,62,.25);border-radius:12px;padding:12px 14px;margin-top:10px}
+.call-out-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);margin-bottom:6px}
+.call-out-letters{font-size:24px;font-weight:800;font-family:var(--num);color:var(--gold);letter-spacing:4px}
+.waiting{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:12px;text-align:center}
+.pulse-ring{width:48px;height:48px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite}
+.waiting p{font-size:14px;color:var(--muted)}
+
+
 /* ── toast ── */
 #toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);
        border:1px solid var(--line);border-radius:12px;padding:12px 18px;
@@ -194,9 +242,23 @@ input:focus{outline:none;border-color:var(--accent)}
       Chairman Portal
     </div>
     <div class="auth-sub" id="auth-sub">Enter your PIN to access the chairman portal.</div>
-    <input type="password" id="pin-input" placeholder="PIN" maxlength="8" autocomplete="current-password"/>
+    <input type="text" class="pin-display" id="pinDisplay" readonly placeholder="····" autocomplete="off" style="margin-bottom:12px" />
+    <div class="numpad">
+      <button class="numpad-btn" onclick="pinDigit(1)">1</button>
+      <button class="numpad-btn" onclick="pinDigit(2)">2</button>
+      <button class="numpad-btn" onclick="pinDigit(3)">3</button>
+      <button class="numpad-btn" onclick="pinDigit(4)">4</button>
+      <button class="numpad-btn" onclick="pinDigit(5)">5</button>
+      <button class="numpad-btn" onclick="pinDigit(6)">6</button>
+      <button class="numpad-btn" onclick="pinDigit(7)">7</button>
+      <button class="numpad-btn" onclick="pinDigit(8)">8</button>
+      <button class="numpad-btn" onclick="pinDigit(9)">9</button>
+      <button class="numpad-btn" onclick="pinClear()" style="color:var(--danger)">C</button>
+      <button class="numpad-btn" onclick="pinDigit(0)">0</button>
+      <button class="numpad-btn" onclick="pinDel()">⌫</button>
+    </div>
     <div class="err" id="auth-err"></div>
-    <button class="btn btn-primary" style="width:100%" id="auth-btn">Enter →</button>
+    <button class="btn btn-primary" style="width:100%" id="auth-btn" onclick="doAuth()">Enter →</button>
     <div style="margin-top:16px;display:flex;justify-content:center">
       <a href="/" style="color:var(--muted);font-size:13px">← Back to main</a>
     </div>
@@ -206,7 +268,11 @@ input:focus{outline:none;border-color:var(--accent)}
 <header>
   <span class="logo" onclick="location.reload()">tele<b>mark</b></span>
   <span class="sp"></span>
-  <div class="top-nav" id="tabs">
+  <div class="top-nav" id="tabs" style="display:flex;overflow-x:auto;white-space:nowrap;gap:8px;padding-bottom:8px;-ms-overflow-style:none;scrollbar-width:none;">
+    <button class="nav-btn" data-tab="dashboard">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      Dashboard
+    </button>
     <button class="nav-btn active" data-tab="categories">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Categories
@@ -235,7 +301,8 @@ input:focus{outline:none;border-color:var(--accent)}
 </header>
 
 <main>
-  <div id="tab-categories"></div>
+  <div id="tab-dashboard" style="display:none; max-width:600px; margin:0 auto;"></div>
+  <div id="tab-categories" style="display:block"></div>
   <div id="tab-judges" style="display:none"></div>
   <div id="tab-live" style="display:none"></div>
   <div id="tab-print" style="display:none"></div>
@@ -246,7 +313,8 @@ input:focus{outline:none;border-color:var(--accent)}
 
 <script>
 'use strict';
-const BASE = '';
+let BASE = localStorage.getItem('telemark_server_url') || '';
+BASE = BASE.replace(/\/$/, '');
 let TOKEN = localStorage.getItem('chairman_token') || '';
 let liveInterval = null;
 let currentTab = 'categories';
@@ -269,35 +337,33 @@ function toast(msg, isErr=false){
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────
+let _pin = '';
+function pinDigit(n) {
+  if (_pin.length >= 8) return;
+  _pin += n;
+  document.getElementById('pinDisplay').value = '●'.repeat(_pin.length);
+}
+function pinClear() { _pin = ''; document.getElementById('pinDisplay').value = ''; }
+function pinDel()   { _pin = _pin.slice(0,-1); document.getElementById('pinDisplay').value = '●'.repeat(_pin.length); }
+
 function showAuth(){ document.getElementById('auth-overlay').style.display='flex'; }
 function hideAuth(){ document.getElementById('auth-overlay').style.display='none'; }
 
 async function doAuth(){
-  const pin=document.getElementById('pin-input').value.trim();
+  const pin=_pin;
   const btn=document.getElementById('auth-btn');
-  const sub=document.getElementById('auth-sub');
   const err=document.getElementById('auth-err');
   err.textContent=''; btn.disabled=true; btn.textContent='…';
   try{
-    // Check if PIN is set
-    const status=await fetch('/api/chairman/status').then(r=>r.json());
-    if(!status.pinSet){
-      // First time setup
-      if(pin.length<4){err.textContent='PIN must be at least 4 digits.'; return;}
-      await fetch('/api/chairman/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(r=>r.json());
-      sub.textContent='PIN set successfully. Logging in…';
-    }
-    const res=await fetch('/api/chairman/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(async r=>{
+    const res=await fetch(BASE+'/api/chairman/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(async r=>{
       const d=await r.json(); if(!r.ok) throw new Error(d.error); return d;
     });
     TOKEN=res.token; localStorage.setItem('chairman_token',TOKEN);
+    if(res.full_name) localStorage.setItem('telemark_chairman_name', res.full_name);
     hideAuth(); boot();
   }catch(e){ err.textContent=e.message; }
   finally{ btn.disabled=false; btn.textContent='Enter →'; }
 }
-
-document.getElementById('auth-btn').onclick=doAuth;
-document.getElementById('pin-input').onkeydown=e=>{ if(e.key==='Enter') doAuth(); };
 
 // ── Boot ──────────────────────────────────────────────────────────────
 async function boot(){
@@ -307,7 +373,8 @@ async function boot(){
       fetch('/api/chairman/status',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json()),
       fetch('/api/competition',{headers:{'x-chairman-token':TOKEN}}).then(r=>r.json()),
     ]);
-    if(!status) return;
+    if(!status || status.error){ showAuth(); return; }
+    hideAuth();
     // Update header
     const compName = document.getElementById('comp-name');
     compName.textContent = comp ? comp.name : 'No competition';
@@ -330,17 +397,152 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     currentTab=btn.dataset.tab;
     document.getElementById('tab-'+currentTab).style.display='';
     if(currentTab==='live') startLive(); else stopLive();
+    if(currentTab==='dashboard') startDashboard(); else stopDashboard();
     renderTab(currentTab);
   };
 });
 
+function startDashboard(){ if(!dashInterval) dashInterval=setInterval(()=>renderDashboard(),3000); }
+function stopDashboard(){ clearInterval(dashInterval); dashInterval=null; }
+
 function renderTab(tab){
-  if(tab==='categories') renderCategories();
+  if(tab==='dashboard') renderDashboard();
+  else if(tab==='categories') renderCategories();
   else if(tab==='judges') renderJudges();
   else if(tab==='live') renderLive();
   else if(tab==='print') renderPrint();
   else if(tab==='settings') renderSettings();
 }
+
+// ── DASHBOARD TAB ────────────────────────────────────────────────────────
+let dashInterval = null;
+async function renderDashboard(){
+  const main = document.getElementById('tab-dashboard');
+  if(!main.innerHTML) main.innerHTML='<div class="empty"><span class="spin">◌</span> Loading Dashboard…</div>';
+  try {
+    const res = await fetch(BASE+'/api/chairman/app-dashboard');
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    
+    let html = '';
+
+    // ── 1. Judges ──
+    const judges = (data.judges || []).filter(j => j.role === 'judge');
+    const onlineCount = judges.filter(j => j.online).length;
+    html += `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">👥</span>
+        <span class="card-title">Judges — ${onlineCount}/${judges.length} Online</span>
+      </div>
+      <div class="card-body">
+        <div class="judges-grid">
+          ${judges.map(j => `
+            <div class="judge-chip ${j.online ? 'online' : 'offline'}">
+              <div class="judge-letter">${j.judge_letter || '?'}</div>
+              <div class="judge-info">
+                <div class="judge-name">${esc(j.full_name)}</div>
+                <div class="judge-status">${j.online
+                  ? (j.battery != null ? \`🔋\${j.battery}%\` : '✓ Online')
+                  : 'Offline'}</div>
+              </div>
+            </div>`).join('')}
+          ${judges.length === 0 ? '<div style="color:var(--muted);font-size:13px">No judges assigned</div>' : ''}
+        </div>
+      </div>
+    </div>`;
+
+    // ── 2. Active Category ──
+    const ac = data.activeCategory;
+    if (ac) {
+      const kindLabel = {
+        'qualification':'I Round','recall':'II Round','semifinal':'Semifinal',
+        'final':'Final','grading':'Grading'
+      }[ac.kind] || ac.kind;
+      html += `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🎯</span>
+          <span class="card-title">Active Category</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:17px;font-weight:700;margin-bottom:12px">${esc(ac.name)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${kindLabel}</div>
+          <div class="cat-stats">
+            <div class="stat-box">
+              <div class="stat-num">${ac.entry_count}</div>
+              <div class="stat-lbl">${ac.entry_count === 1 ? 'Entry' : 'Entries'}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num">${ac.floor_count}</div>
+              <div class="stat-lbl">On Floor</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num">${ac.judges ? ac.judges.length : 0}</div>
+              <div class="stat-lbl">Judges</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Start Numbers</div>
+          <div class="numbers-grid">
+            ${ac.entries.map(e => \`<div class="num-chip">\${e.start_number ?? '—'}</div>\`).join('')}
+          </div>
+        </div>
+      </div>`;
+    } else {
+      html += \`<div class="card"><div class="card-header"><span class="card-icon">🎯</span><span class="card-title">Active Category</span></div><div class="waiting"><div class="pulse-ring"></div><p>No active category</p></div></div>\`;
+    }
+
+    // ── 3. Next Category ──
+    const nc = data.nextCategory;
+    if (nc) {
+      const stayLetters = nc.staying.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+      const newLetters  = nc.newJudges.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+      const callLetters = nc.newJudges.map(j => j.judge_letter).filter(Boolean).sort().join('  ');
+      html += `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">⏭️</span>
+          <span class="card-title">Next Category</span>
+        </div>
+        <div class="card-body">
+          <div class="next-cat-name">${esc(nc.name)} <span style="font-size:13px;color:var(--muted);font-weight:500">(${nc.entry_count} entries)</span></div>
+          ${nc.staying.length > 0 ? `
+          <div class="section-lbl">✅ Staying</div>
+          <div class="judge-row-list">
+            ${nc.staying.map(j => `
+              <div class="judge-row">
+                <span class="badge badge-stay">${j.judge_letter || '?'}</span>
+                <span style="font-size:13px;font-weight:600">${esc(j.full_name)}</span>
+                <span style="margin-left:auto;font-size:11px;color:var(--ok)">Staying</span>
+              </div>`).join('')}
+          </div>` : ''}
+          ${nc.newJudges.length > 0 ? `
+          <div class="section-lbl">🆕 New</div>
+          <div class="judge-row-list">
+            ${nc.newJudges.map(j => `
+              <div class="judge-row">
+                <span class="badge badge-new">${j.judge_letter || '?'}</span>
+                <span style="font-size:13px;font-weight:600">${esc(j.full_name)}</span>
+                <span style="margin-left:auto;font-size:11px;color:#a78bfa">New</span>
+              </div>`).join('')}
+          </div>
+          <div class="call-out-box">
+            <div class="call-out-title">📣 Call Out</div>
+            <div class="call-out-letters">${callLetters || '—'}</div>
+          </div>` : \`<div style="font-size:13px;color:var(--muted);margin-top:8px">All judges are staying</div>\`}
+          ${nc.judges.length === 0 ? \`<div style="font-size:13px;color:var(--muted)">Judges not assigned yet</div>\` : ''}
+        </div>
+      </div>`;
+    } else if (!ac) {
+      html += \`<div class="card"><div class="card-header"><span class="card-icon">⏭️</span><span class="card-title">Next Category</span></div><div class="waiting"><p>No next category</p></div></div>\`;
+    }
+
+    main.innerHTML = html;
+  } catch(e) {
+    main.innerHTML = \`<div class="waiting"><p style="color:var(--danger)">Failed to load dashboard</p></div>\`;
+  }
+}
+
 
 // ── CATEGORIES TAB ─────────────────────────────────────────────────────
 async function renderCategories(){
@@ -489,7 +691,7 @@ async function renderJudges(){
         <tr style="border-bottom:1px solid var(--line); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
           <td style="padding:12px 16px; text-align:left; font-weight:600; border:1px solid var(--line); position:sticky; left:0; background:${color.bg}; border-left:4px solid ${color.border}; z-index:5; box-shadow: 2px 0 5px rgba(0,0,0,0.3);">
             <div style="font-size:13.5px; color:${color.text}; font-weight:700">${esc(c.name)}</div>
-            <div style="font-size:11px; color:var(--muted); font-weight:500; margin-top:2px;">${c.entry_count} წყვილი / couples</div>
+            <div style="font-size:11px; color:var(--muted); font-weight:500; margin-top:2px;">${c.entry_count} couples</div>
           </td>
           ${cellsHtml}
         </tr>
@@ -498,15 +700,15 @@ async function renderJudges(){
 
     let html = `
       <div class="card" style="margin-bottom:16px;">
-        <div class="card-title">მსაჯების განაწილების მატრიცა / Judging Allocation Matrix</div>
+        <div class="card-title">Judging Allocation Matrix</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0 4px;">
-          <input type="text" id="chJudgeName" placeholder="მსაჯის სახელი (ლათინური)"
+          <input type="text" id="chJudgeName" placeholder="Adjudicator Name (Latin)"
             onkeydown="if(event.key==='Enter')addJudgeChairman()"
             style="flex:1; min-width:200px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
-          <input type="text" id="chJudgeStudio" placeholder="Studio (არასავალდებულო)"
+          <input type="text" id="chJudgeStudio" placeholder="Studio (Optional)"
             onkeydown="if(event.key==='Enter')addJudgeChairman()"
             style="flex:1; min-width:180px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); font-size:14px;" />
-          <button class="btn" id="chJudgeAddBtn" onclick="addJudgeChairman()" style="padding:9px 16px; font-weight:700; white-space:nowrap; background:var(--accent); color:#06222a; border:none; border-radius:10px; cursor:pointer;">+ მსაჯის დამატება</button>
+          <button class="btn" id="chJudgeAddBtn" onclick="addJudgeChairman()" style="padding:9px 16px; font-weight:700; white-space:nowrap; background:var(--accent); color:#06222a; border:none; border-radius:10px; cursor:pointer;">+ Add Adjudicator</button>
         </div>
         <div style="width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:rgba(0,0,0,0.2); margin-top:8px;">
           <table style="width:100%; border-collapse:collapse; font-size:13px;">
@@ -523,9 +725,9 @@ async function renderJudges(){
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a href="/judges.html" target="_blank" class="btn btn-ghost" style="border-color:var(--accent);color:var(--accent)">⚖ მართვა / Manage Judges</a>
-        <a href="/print/judges-summary" target="_blank" class="btn btn-ghost">📋 ბეჭდვა ერთად / Print Summary</a>
-        <a href="/print/judges-slips" target="_blank" class="btn btn-ghost">✂️ ბარათები ცალ-ცალკე / Print Slips</a>
+        <a href="/judges.html" target="_blank" class="btn btn-ghost" style="border-color:var(--accent);color:var(--accent)">⚖ Manage Judges</a>
+        <a href="/print/judges-summary" target="_blank" class="btn btn-ghost">📋 Print Summary</a>
+        <a href="/print/judges-slips" target="_blank" class="btn btn-ghost">✂️ Print Slips</a>
         <button class="btn btn-ghost" onclick="openPinReset()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Reset PIN</button>
         <a href="/print/pins" target="_blank" class="btn btn-ghost"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print All PINs</a>
       </div>
@@ -547,7 +749,7 @@ async function toggleChairmanGridAssignment(catId, judgeId, cb) {
     if (cell) {
       cell.style.background = cb.checked ? 'rgba(0, 229, 255, 0.05)' : 'transparent';
     }
-    toast('განაწილება განახლდა / Assignment updated');
+    toast('Assignment updated');
   } catch (err) {
     cb.checked = !cb.checked;
     toast('Error: ' + err.message, true);
@@ -570,12 +772,12 @@ async function addJudgeChairman() {
   btn.textContent = '...';
   try {
     await post('/api/judges', { full_name: name, studio_name: studio });
-    toast('მსაჯი დაემატა ✓');
+    toast('Adjudicator added ✓');
     await renderJudges(); // re-draw matrix with the new judge column
   } catch (err) {
     toast('Error: ' + err.message, true);
     const b = document.getElementById('chJudgeAddBtn');
-    if (b) { b.disabled = false; b.textContent = '+ მსაჯის დამატება'; }
+    if (b) { b.disabled = false; b.textContent = '+ Add Adjudicator'; }
   }
 }
 
