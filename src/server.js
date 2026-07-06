@@ -431,6 +431,111 @@ function createServer(db, opts = {}) {
     res.json({ ok: true, seeded: defaults.length });
   }));
 
+  // ── Criteria scoring (step 3+4): judge input + results ───────────────
+  // Everything needed to render the grid and compute results for one
+  // criteria-based category. Additive; touches no existing judging flow.
+  app.get('/api/criteria-scoring/:catId', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const catId = +req.params.catId;
+    const category = db.prepare('SELECT id, name, judging_system FROM category WHERE id=? AND competition_id=?').get(catId, comp.id);
+    if (!category) return res.status(404).json({ error: 'Category not found' });
+
+    const criteria = db.prepare(
+      `SELECT id, name, name_en, range_min, range_max FROM criteria
+       WHERE competition_id=? AND active=1 ORDER BY sort_order, id`
+    ).all(comp.id);
+
+    const judges = db.prepare(
+      `SELECT id, full_name, judge_letter FROM official
+       WHERE competition_id=? AND role='judge' ORDER BY judge_letter NULLS LAST, id`
+    ).all(comp.id);
+
+    const entries = db.prepare(
+      `SELECT id, start_number, name1, name2, studio_name FROM entry
+       WHERE category_id=? AND status!='withdrawn' ORDER BY start_number NULLS LAST, name1`
+    ).all(catId);
+
+    const marks = db.prepare(
+      `SELECT official_id, entry_id, criterion_id, score FROM criteria_mark WHERE category_id=?`
+    ).all(catId);
+
+    res.json({ category, criteria, judges, entries, marks });
+  }));
+
+  app.post('/api/criteria-scoring/:catId/score', wrap((req, res) => {
+    if (security.isLocked(db)) return res.status(403).json({ error: 'Competition is locked.' });
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const catId = +req.params.catId;
+    const { official_id, entry_id, criterion_id } = req.body;
+    let { score } = req.body;
+    if (!official_id || !entry_id || !criterion_id)
+      return res.status(400).json({ error: 'official_id, entry_id, criterion_id are required' });
+
+    // clamp to the criterion range; empty score clears the cell
+    const crit = db.prepare('SELECT range_min, range_max FROM criteria WHERE id=?').get(+criterion_id);
+    if (score === '' || score === null || score === undefined) {
+      db.prepare('DELETE FROM criteria_mark WHERE category_id=? AND official_id=? AND entry_id=? AND criterion_id=?')
+        .run(catId, +official_id, +entry_id, +criterion_id);
+      broadcast('criteria:score', { catId });
+      return res.json({ ok: true, cleared: true });
+    }
+    score = +score;
+    if (!Number.isFinite(score)) return res.status(400).json({ error: 'score must be a number' });
+    if (crit) score = Math.max(crit.range_min, Math.min(crit.range_max, score));
+
+    db.prepare(
+      `INSERT INTO criteria_mark (category_id, official_id, entry_id, criterion_id, score, updated_at)
+       VALUES (?,?,?,?,?,datetime('now'))
+       ON CONFLICT(category_id, official_id, entry_id, criterion_id)
+       DO UPDATE SET score=excluded.score, updated_at=datetime('now')`
+    ).run(catId, +official_id, +entry_id, +criterion_id, score);
+
+    broadcast('criteria:score', { catId });
+    res.json({ ok: true, score });
+  }));
+
+  // Aggregated results: total per entry across all criteria & all judges.
+  app.get('/api/criteria-scoring/:catId/results', wrap((req, res) => {
+    const comp = getActiveCompetition(db);
+    if (!comp) return res.status(400).json({ error: 'No competition loaded.' });
+    const catId = +req.params.catId;
+
+    const entries = db.prepare(
+      `SELECT id, start_number, name1, name2, studio_name FROM entry
+       WHERE category_id=? AND status!='withdrawn'`
+    ).all(catId);
+
+    const rows = db.prepare(
+      `SELECT entry_id, official_id, SUM(score) AS judge_total, COUNT(*) AS n
+       FROM criteria_mark WHERE category_id=? GROUP BY entry_id, official_id`
+    ).all(catId);
+
+    const byEntry = {};
+    for (const r of rows) {
+      (byEntry[r.entry_id] ||= { total: 0, judges: 0 });
+      byEntry[r.entry_id].total += r.judge_total;
+      byEntry[r.entry_id].judges += 1;
+    }
+
+    const results = entries.map(e => {
+      const agg = byEntry[e.id] || { total: 0, judges: 0 };
+      return {
+        entry_id: e.id,
+        start_number: e.start_number,
+        name: e.name2 ? `${e.name1} & ${e.name2}` : e.name1,
+        studio_name: e.studio_name,
+        total: Math.round(agg.total * 100) / 100,
+        judges_scored: agg.judges,
+        average: agg.judges ? Math.round((agg.total / agg.judges) * 100) / 100 : 0
+      };
+    }).sort((a, b) => b.total - a.total);
+
+    results.forEach((r, i) => { r.place = i + 1; });
+    res.json({ results });
+  }));
+
   app.get('/api/judges/assignments', wrap((req, res) => {
     const comp = getActiveCompetition(db);
     if (!comp) return res.json([]);

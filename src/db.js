@@ -207,6 +207,22 @@ function openDb(file = ':memory:', opts = {}) {
       )`);
     }
 
+    // Per-judge, per-entry, per-criterion scores (criteria-based categories).
+    // Category-level (no round/dance needed) so it never interferes with the
+    // existing skating/placement flow. Fully removable with the criteria feature.
+    if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='criteria_mark'").get()) {
+      db.exec(`CREATE TABLE criteria_mark (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id  INTEGER NOT NULL REFERENCES category(id) ON DELETE CASCADE,
+        official_id  INTEGER NOT NULL REFERENCES official(id) ON DELETE CASCADE,
+        entry_id     INTEGER NOT NULL REFERENCES entry(id) ON DELETE CASCADE,
+        criterion_id INTEGER NOT NULL REFERENCES criteria(id) ON DELETE CASCADE,
+        score        REAL,
+        updated_at   TEXT DEFAULT (datetime('now')),
+        UNIQUE(category_id, official_id, entry_id, criterion_id)
+      )`);
+    }
+
     // ── Guarantee sync_state id=1 always exists ──────────────────────
     const hasSyncRow = db.prepare('SELECT id FROM sync_state WHERE id=1').get();
     if (!hasSyncRow) {

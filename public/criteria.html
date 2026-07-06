@@ -57,6 +57,7 @@ input:focus{outline:none;border-color:var(--accent)}
 <header>
   <a class="logo" href="/scrutineer.html">Telemark</a>
   <div class="sp"></div>
+  <a class="navlink" href="/criteria-score.html">criteria შეფასება</a>
   <a class="navlink" href="/judges.html">მსაჯები</a>
   <a class="navlink" href="/scrutineer.html">მთავარი</a>
 </header>
@@ -101,7 +102,19 @@ input:focus{outline:none;border-color:var(--accent)}
       „ორმაგი" (allow double) ნიშნავს, რომ ერთ კრიტერიუმზე ერთ მონაწილეს ერთი და იგივე ქულა შეიძლება რამდენჯერმე მიენიჭოს. „დიაპაზონი" — მინიმალური და მაქსიმალური ქულა.
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-title" style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">
+      რომელი კატეგორია ფასდება კრიტერიუმებით
+    </div>
+    <div class="sub" style="margin-bottom:16px">
+      მონიშნე კატეგორიები, რომლებიც artistic (criteria) სისტემით უნდა შეფასდეს. დანარჩენები ჩვეულებრივ (skating) სისტემაზე რჩება.
+    </div>
+    <div id="catList"><div class="empty">იტვირთება…</div></div>
+    <div class="hint" id="catHint" style="margin-top:12px"></div>
+  </div>
 </main>
+
 
 <div id="toast" class="toast"></div>
 
@@ -232,7 +245,73 @@ function connectWS() {
   } catch (_) {}
 }
 
+// ── Step 2: assign which categories are judged by criteria ───────────
+const CRITERIA_SYSTEM = 'criteria';
+let categories = [];
+
+async function loadCategories() {
+  const list = document.getElementById('catList');
+  try {
+    const data = await api('/api/scrutineer/overview');
+    categories = Array.isArray(data.categories) ? data.categories : [];
+  } catch (e) {
+    categories = [];
+    list.innerHTML = `<div class="empty">კატეგორიების ჩატვირთვა ვერ მოხერხდა: ${esc(e.message)}</div>`;
+    return;
+  }
+  renderCategories();
+}
+
+function renderCategories() {
+  const list = document.getElementById('catList');
+  const hint = document.getElementById('catHint');
+  if (!categories.length) {
+    list.innerHTML = `<div class="empty">ამ შეჯიბრში ჯერ კატეგორიები არ არის.</div>`;
+    hint.textContent = '';
+    return;
+  }
+  const usedCount = categories.filter(c => c.judging_system === CRITERIA_SYSTEM).length;
+  list.innerHTML = `
+    <table>
+      <thead><tr><th class="idx">#</th><th>კატეგორია</th><th style="text-align:center">criteria-ით ფასდება</th></tr></thead>
+      <tbody>
+        ${categories.map((c, i) => `
+          <tr>
+            <td class="idx">${i + 1}</td>
+            <td>${esc(c.name)}</td>
+            <td style="text-align:center">
+              <input type="checkbox" ${c.judging_system === CRITERIA_SYSTEM ? 'checked' : ''}
+                onchange="toggleCategory(${c.id}, this)"
+                style="width:18px;height:18px;accent-color:var(--accent)"/>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+  hint.textContent = usedCount
+    ? `${usedCount} კატეგორია ფასდება კრიტერიუმებით.`
+    : 'ჯერ არცერთი კატეგორია არ ფასდება კრიტერიუმებით.';
+}
+
+async function toggleCategory(catId, cb) {
+  const target = cb.checked ? CRITERIA_SYSTEM : 'skating';
+  cb.disabled = true;
+  try {
+    await POST(`/api/scrutineer/category/${catId}/judging-system`, { system: target });
+    const c = categories.find(x => x.id === catId);
+    if (c) c.judging_system = target;
+    renderCategories();
+    toast(cb.checked ? 'criteria-ზე გადაერთო ✓' : 'skating-ზე დაბრუნდა');
+  } catch (e) {
+    cb.checked = !cb.checked; // revert visual
+    toast('შეცდომა: ' + e.message);
+  } finally {
+    const fresh = document.querySelector(`input[onchange*="toggleCategory(${catId},"]`);
+    if (fresh) fresh.disabled = false;
+  }
+}
+
 load();
+loadCategories();
 connectWS();
 </script>
 </body>
